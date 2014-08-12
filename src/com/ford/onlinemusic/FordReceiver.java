@@ -1,4 +1,4 @@
-package com.ford.musicapppractice;
+package com.ford.onlinemusic;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

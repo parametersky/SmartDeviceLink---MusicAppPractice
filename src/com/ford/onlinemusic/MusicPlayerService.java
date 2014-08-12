@@ -1,4 +1,4 @@
-package com.ford.musicapppractice;
+package com.ford.onlinemusic;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -203,15 +203,19 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return -1;
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return -1;
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return -1;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return -1;
 		}
 		mInitailized = false;
 		mPlayer.prepareAsync();

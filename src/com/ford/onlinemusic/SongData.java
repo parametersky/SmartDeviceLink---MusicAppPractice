@@ -1,4 +1,4 @@
-package com.ford.musicapppractice;
+package com.ford.onlinemusic;
 
 public class SongData {
 	private String Name = "";

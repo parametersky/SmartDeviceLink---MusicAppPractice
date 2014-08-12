@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ford.musicapppractice"
+    package="com.ford.onlinemusic"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -20,7 +20,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
-            android:name=".MainActivity"
+            android:name="com.ford.onlinemusic.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,7 +30,7 @@
         </activity>
 
         <receiver
-            android:name=".FordReceiver"
+            android:name="com.ford.onlinemusic.FordReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
@@ -43,8 +43,8 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".FordService" />
-        <service android:name=".MusicPlayerService" />
+        <service android:name="com.ford.onlinemusic.FordService" />
+        <service android:name="com.ford.onlinemusic.MusicPlayerService" />
     </application>
 
 </manifest>

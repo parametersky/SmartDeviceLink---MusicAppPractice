@@ -1,13 +1,17 @@
-package com.ford.musicapppractice;
+package com.ford.onlinemusic;
+
+import com.ford.musicapppractice.R;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,6 +39,7 @@ public class MainActivity extends Activity {
 							return;
 						int visibility = lockscreen.getVisibility();
 						if (visibility == View.GONE) {
+							Log.d("Kyle","set lockscreen on");
 							lockscreen.setVisibility(View.VISIBLE);
 						}
 					}
@@ -50,6 +55,7 @@ public class MainActivity extends Activity {
 							return;
 						int visibility = lockscreen.getVisibility();
 						if (visibility == View.VISIBLE) {
+							Log.d("Kyle","set lockscreen off");
 							lockscreen.setVisibility(View.GONE);
 						}
 					}
@@ -80,28 +86,32 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		startAppLinkService();
 		lockscreen = (ImageView) findViewById(R.id.lockscreen);
+		lockscreen.setBackgroundColor(Color.WHITE);
 		lockscreen.setImageResource(R.drawable.ic_launcher);
-		isAppRunning = true;
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction("com.kyle.lockscreen");
 		registerReceiver(mBR, intentfilter);
 		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
+		Log.d("Kyle","onCreate ");
 	}
 
 	public void onResume() {
 		super.onResume();
+		Log.d("Kyle","onResume showlockscreen:  "+showLockscreen);
 		isAppRunning = true;
-		if (getIntent().getBooleanExtra("LOCKSCREEN", false)) {
+		if (showLockscreen) {
 			showLockscreen();
 		}
 	}
 
 	public void onPause() {
 		super.onPause();
+		Log.d("Kyle","onPause ");
 		isAppRunning = false;
 	}
 	public void onDestroy(){
 		super.onDestroy();
+		Log.d("Kyle","onDestroy ");
 		unregisterReceiver(mBR);
 	}
 
@@ -116,17 +126,12 @@ public class MainActivity extends Activity {
 		return isAppRunning;
 	}
 
-	public static void showLockscreen() {
-		
+	public  void showLockscreen() {
+		mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
 	}
 
-	public static void removeLockscreen() {
-		if (!isAppRunning)
-			return;
-		int visibility = lockscreen.getVisibility();
-		if (visibility == View.VISIBLE) {
-			lockscreen.setVisibility(View.GONE);
-		}
+	public  void removeLockscreen() {
+		mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
 	}
 
 	@Override

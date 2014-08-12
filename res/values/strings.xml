@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">MusicAppPractice</string>
+    <string name="app_name">Online Music Demo</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 	<string name="bufferring">Bufferring</string>
@@ -25,4 +25,10 @@
 	<string name="cancelsave">Remove from favorites</string>
 	<string name="play">Play</string>
 	<string name="pause">Pause</string>
+	<string name="randomon">Random On</string>
+	<string name="randomoff">Random Off</string>
+	<string name="addfavorite">Save the song</string>
+	<string name="songinfo">Track Info</string>
+	<string name="selectplaylistmanually">Please select app mode manually</string>
+	<string name="nowplayinglist">You are now playing</string>
 </resources>
