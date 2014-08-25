@@ -16,19 +16,21 @@
 	<string name="save">加星</string>
 	<string name="share">分享</string>
 	<string name="info">信息</string>
-	<string name="musicappdemo">音乐演示</string>
+	<string name="musicappdemo">网络音乐</string>
 	<string name="selectplaylist">请选择播放列表</string>
 	<string name="alreadychoose">你选择了</string>
 	<string name="nolocalmusic">没有本地音乐</string>
-	<string name="savesuccess">收藏成功</string>
+	<string name="savesuccess">已加星</string>
 	<string name="sharesuccess">分享成功</string>
-	<string name="cancelsave">收藏取消</string>
+	<string name="cancelsave">取消加星</string>
 	<string name="play">播放</string>
 	<string name="pause">暂停</string>
 	<string name="randomon">随机播放</string>
 	<string name="randomoff">顺序播放</string>
 	<string name="addfavorite">加星</string>
 	<string name="songinfo">歌曲信息</string>
-	<string name="selectplaylistmanually">请手动选择播放列表</string>
+	<string name="selectplaylistmanually">请按键选择播放列表</string>
 	<string name="nowplayinglist">你正在播放</string>
+	<string name="networkerror">网络错误</string>
+	<string name="ioerror">读取错误</string>
 </resources>

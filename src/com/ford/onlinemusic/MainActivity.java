@@ -1,7 +1,5 @@
 package com.ford.onlinemusic;
 
-import com.ford.musicapppractice.R;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,16 +13,23 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends Activity {
 
 	private static ImageView lockscreen;
 	private static boolean isAppRunning = false;
-	private static boolean showLockscreen  = false;
+	private static boolean showLockscreen = false;
 	private final int ACTION_SHOWLOCKSCREEN = 1;
 	private final int ACTION_REMOVELOCKSCREEN = 2;
-	private  Handler mHandler = new Handler() {
+	private ViewGroup mLockScreenView = null;
+	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			int action = msg.what;
 			switch (action) {
@@ -37,11 +42,13 @@ public class MainActivity extends Activity {
 						// TODO Auto-generated method stub
 						if (!isAppRunning)
 							return;
-						int visibility = lockscreen.getVisibility();
-						if (visibility == View.GONE) {
-							Log.d("Kyle","set lockscreen on");
-							lockscreen.setVisibility(View.VISIBLE);
-						}
+						// int visibility = lockscreen.getVisibility();
+						// if (visibility == View.GONE) {
+						// Log.d("Kyle", "set lockscreen on");
+						// lockscreen.setVisibility(View.VISIBLE);
+						// }
+
+						 addViewOnTop();
 					}
 				});
 				break;
@@ -54,10 +61,11 @@ public class MainActivity extends Activity {
 						if (!isAppRunning)
 							return;
 						int visibility = lockscreen.getVisibility();
-						if (visibility == View.VISIBLE) {
-							Log.d("Kyle","set lockscreen off");
-							lockscreen.setVisibility(View.GONE);
-						}
+						// if (visibility == View.VISIBLE) {
+						// Log.d("Kyle", "set lockscreen off");
+						// lockscreen.setVisibility(View.GONE);
+						// }
+						removeViewOnTop();
 					}
 				});
 				break;
@@ -67,51 +75,73 @@ public class MainActivity extends Activity {
 		}
 	};
 	public BroadcastReceiver mBR = new BroadcastReceiver() {
-		
+
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// TODO Auto-generated method stub
 			boolean isLock = intent.getBooleanExtra("LOCK", false);
-			if(isLock){
-				mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
+			Log.d("Kyle MainActivity", "onReceive lockscreen: " + isLock);
+			showLockscreen = isLock;
+			if (isLock) {
+//				mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
+				addViewOnTop();
 			} else {
-				mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
+//				mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
+				removeViewOnTop();
 			}
 		}
 	};
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		startAppLinkService();
 		lockscreen = (ImageView) findViewById(R.id.lockscreen);
-		lockscreen.setBackgroundColor(Color.WHITE);
-		lockscreen.setImageResource(R.drawable.ic_launcher);
+		// lockscreen.setBackgroundColor(Color.WHITE);
+		// lockscreen.setImageResource(R.drawable.ic_launcher);
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction("com.kyle.lockscreen");
 		registerReceiver(mBR, intentfilter);
 		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
-		Log.d("Kyle","onCreate ");
+		Log.d("Kyle", "onCreate ");
+
+//		Button button = (Button) findViewById(R.id.button);
+//		button.setOnClickListener(new View.OnClickListener() {
+//
+//			@Override
+//			public void onClick(View v) {
+//				// TODO Auto-generated method stub
+//				addViewOnTop();
+//			}
+//
+//		});
+//		addViewOnTop();
 	}
 
 	public void onResume() {
 		super.onResume();
-		Log.d("Kyle","onResume showlockscreen:  "+showLockscreen);
+		Log.d("Kyle", "onResume showlockscreen:  " + showLockscreen);
 		isAppRunning = true;
 		if (showLockscreen) {
 			showLockscreen();
+		} else {
+			removeLockscreen();
 		}
 	}
 
 	public void onPause() {
 		super.onPause();
-		Log.d("Kyle","onPause ");
+		Log.d("Kyle", "onPause ");
 		isAppRunning = false;
 	}
-	public void onDestroy(){
+
+	public void onDestroy() {
 		super.onDestroy();
-		Log.d("Kyle","onDestroy ");
+		Log.d("Kyle", "onDestroy ");
+		Intent intent = new Intent();
+		intent.setClass(this, FordService.class);
+		stopService(intent);
 		unregisterReceiver(mBR);
 	}
 
@@ -126,12 +156,55 @@ public class MainActivity extends Activity {
 		return isAppRunning;
 	}
 
-	public  void showLockscreen() {
-		mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
+	public void showLockscreen() {
+//		mHandler.removeMessages(ACTION_REMOVELOCKSCREEN);
+//		mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
+		addViewOnTop();
 	}
 
-	public  void removeLockscreen() {
-		mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
+	public void removeLockscreen() {
+//		mHandler.removeMessages(ACTION_SHOWLOCKSCREEN);
+//		mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
+		removeViewOnTop();
+	}
+
+	public void addViewOnTop() {
+		Log.d("Kyle","addViewOnTop");
+		if (mLockScreenView == null) {
+			initLockscreenView();
+		}
+		Log.d("Kyle","addViewOnTop lockscreen visibility: "+ mLockScreenView.getVisibility());
+		if( mLockScreenView.getVisibility() == View.VISIBLE)return;
+		LayoutParams params = new LayoutParams(LayoutParams.TYPE_APPLICATION,
+				LayoutParams.FLAG_FULLSCREEN & LayoutParams.FLAG_NOT_TOUCHABLE);
+		((WindowManager) getSystemService(WINDOW_SERVICE)).addView(
+				mLockScreenView, params);
+		mLockScreenView.setVisibility(View.VISIBLE);
+	}
+
+	public void removeViewOnTop() {
+		if (mLockScreenView == null) {
+			initLockscreenView();
+			return;
+		}
+		if (mLockScreenView.getVisibility() == View.VISIBLE) {
+			((WindowManager) getSystemService(WINDOW_SERVICE))
+					.removeView(mLockScreenView);
+			mLockScreenView.setVisibility(View.INVISIBLE);
+		}
+	}
+
+	public void initLockscreenView() {
+		mLockScreenView = new FrameLayout(this);
+		ImageView imageview = new ImageView(this);
+		imageview.setBackgroundColor(Color.WHITE);
+		imageview.setImageResource(R.drawable.lockscreen);
+		FrameLayout.LayoutParams layoutparams = new FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT,
+				FrameLayout.LayoutParams.MATCH_PARENT);
+		imageview.setLayoutParams(layoutparams);
+		mLockScreenView.addView(imageview);
+		mLockScreenView.setVisibility(View.INVISIBLE);
 	}
 
 	@Override

@@ -6,15 +6,25 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.ford.onlinemusic.MainActivity" >
+    tools:context="com.ford.onlinemusic.MainActivity"
+    android:id="@+id/relativelayout">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hello_world" />
+    <Button 
+        android:id="@+id/button"
+        android:layout_width="50dp"
+        android:layout_height="50dp" 
+        android:text="button"/>
+    
     <ImageView
-        android:layout_width="match_parent"
+         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/background_light"
+        android:src="@drawable/lockscreen"
+        android:scaleType="fitCenter"
         android:id="@+id/lockscreen"
         android:visibility="gone"
         />

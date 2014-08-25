@@ -31,4 +31,5 @@
 	<string name="songinfo">Track Info</string>
 	<string name="selectplaylistmanually">Please select app mode manually</string>
 	<string name="nowplayinglist">You are now playing</string>
+	<string name="networkerror">Network Error</string>
 </resources>
