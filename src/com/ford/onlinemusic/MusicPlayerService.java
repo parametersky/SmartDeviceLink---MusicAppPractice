@@ -110,9 +110,9 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 				if (mNetStatus != !status) {
 					mNetStatus = !status;
 					Log.d(TAG, "network status is " + mNetStatus);
-//					if (mNetStatus && mPlayingSong != null && mError) {
-//						mPlayer.start();
-//					}
+					// if (mNetStatus && mPlayingSong != null && mError) {
+					// mPlayer.start();
+					// }
 				}
 			}
 		}
@@ -139,17 +139,6 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 		mPlayer.setOnPreparedListener(this);
 		mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
-		pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(
-				getApplicationContext(), MainActivity.class),
-				PendingIntent.FLAG_UPDATE_CURRENT);
-		notification = new Notification();
-		notification.tickerText = "Service Start";
-		notification.flags |= Notification.FLAG_ONGOING_EVENT;
-		notification.setLatestEventInfo(this, "playing", "playing", pi);
-		startForeground(1011, notification);
-		NotificationManager mNM = (NotificationManager) this
-				.getSystemService(NOTIFICATION_SERVICE);
-		mNM.notify(101, notification);
 		ConnectivityManager cm = (ConnectivityManager) this
 				.getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -179,12 +168,12 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 			return;
 		}
 
-//		if (mError) {
-//			mPlayer.start();
-//			updateDisplay(mCurrentPlayList.getCurrSong(), "Playing");
-//			mError = false;
-//		}
-		
+		// if (mError) {
+		// mPlayer.start();
+		// updateDisplay(mCurrentPlayList.getCurrSong(), "Playing");
+		// mError = false;
+		// }
+
 		if (mCurrentPlayList == null || mCurrentPlayList.size() < 1) {
 			Toast.makeText(this, "Play List is invalid", Toast.LENGTH_SHORT)
 					.show();
@@ -196,7 +185,7 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 			startPlay(mCurrentPlayList.getCurrSong());
 			return;
 		}
-		
+
 	}
 
 	public void pause() {
