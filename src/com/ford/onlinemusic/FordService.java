@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import com.ford.syncV4.exception.SyncException;
+import com.ford.syncV4.exception.SyncExceptionCause;
 import com.ford.syncV4.proxy.SyncProxyALM;
 import com.ford.syncV4.proxy.TTSChunkFactory;
 import com.ford.syncV4.proxy.interfaces.IProxyListenerALM;
@@ -158,13 +159,13 @@ public class FordService extends Service implements IProxyListenerALM {
 								mCommonSoftbutton, null, null, correlationID++);
 						mSyncProxy.setMediaClockTimer(null, null, null,
 								UpdateMode.PAUSE, correlationID++);
-						
-					} else if(status.equalsIgnoreCase("network_error")){
+
+					} else if (status.equalsIgnoreCase("network_error")) {
 						mSyncProxy.show(null, null, null, null, null, null,
 								getStringValue(R.string.networkerror), null,
 								null, null, null, correlationID++);
 
-					} else if(status.equalsIgnoreCase("playing")){
+					} else if (status.equalsIgnoreCase("playing")) {
 						mCommonSoftbutton.remove(0);
 						mCommonSoftbutton.add(0, playbutton);
 						if (favoritesSonglist1.findSong(name) != -1) {
@@ -432,8 +433,8 @@ public class FordService extends Service implements IProxyListenerALM {
 									Arrays.asList(new String[] { getStringValue(R.string.local) })),
 							null, null, correlationID++);
 
-			mSyncProxy.createInteractionChoiceSet(mQQMusicChoiceSet, CHS_ID_PLAYLISTS,
-					correlationID++);
+			mSyncProxy.createInteractionChoiceSet(mQQMusicChoiceSet,
+					CHS_ID_PLAYLISTS, correlationID++);
 			mSyncProxy
 					.addCommand(
 							CMD_ID_ADDFAVORITE,
@@ -684,17 +685,23 @@ public class FordService extends Service implements IProxyListenerALM {
 	public void onProxyClosed(String info, Exception e) {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onProxyClosed");
-		if (mSyncProxy != null) {
-			try {
-				mSyncProxy.resetProxy();
-			} catch (SyncException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		}
-		stopMusicService();
 		removeLockscreen();
-		stopSelf();
+		stopMusicService();
+
+		SyncExceptionCause cause = ((SyncException) e).getSyncExceptionCause();
+		if (cause != SyncExceptionCause.SYNC_PROXY_CYCLED
+				&& cause != SyncExceptionCause.BLUETOOTH_DISABLED) {
+			if (mSyncProxy != null) {
+				try {
+					mSyncProxy.resetProxy();
+				} catch (SyncException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		} else {
+			stopSelf();
+		}
 	}
 
 	@Override
@@ -878,7 +885,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		default:
 			break;
 		}
-		
+
 		// useless code for setting play mode.
 		if (currentList != null)
 			currentList.setRandom(isRandom);
@@ -999,29 +1006,29 @@ public class FordService extends Service implements IProxyListenerALM {
 				pauseMediaPlayer();
 				break;
 
-//			case 1023:
-//				voicePump(getStringValue(R.string.alreadychoose),
-//						getStringValue(R.string.local));
-//				if (localsongs.size() > 1) {
-//					currentList = localsongs;
-//					MusicPlayerService.setPlayList(currentList);
-//					startMediaPlayer();
-//					if (mHighlightedSonglistButton != null)
-//						mHighlightedSonglistButton.setIsHighlighted(false);
-//					localbutton.setIsHighlighted(true);
-//					mHighlightedSonglistButton = localbutton;
-//					try {
-//						mSyncProxy.show(null, null, null, null, null, null,
-//								null, null, mCommonSoftbutton, null, null,
-//								correlationID++);
-//					} catch (SyncException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				} else {
-//					voicePump(getStringValue(R.string.nolocalmusic), null);
-//				}
-//				break;
+			// case 1023:
+			// voicePump(getStringValue(R.string.alreadychoose),
+			// getStringValue(R.string.local));
+			// if (localsongs.size() > 1) {
+			// currentList = localsongs;
+			// MusicPlayerService.setPlayList(currentList);
+			// startMediaPlayer();
+			// if (mHighlightedSonglistButton != null)
+			// mHighlightedSonglistButton.setIsHighlighted(false);
+			// localbutton.setIsHighlighted(true);
+			// mHighlightedSonglistButton = localbutton;
+			// try {
+			// mSyncProxy.show(null, null, null, null, null, null,
+			// null, null, mCommonSoftbutton, null, null,
+			// correlationID++);
+			// } catch (SyncException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+			// } else {
+			// voicePump(getStringValue(R.string.nolocalmusic), null);
+			// }
+			// break;
 			case BTN_ID_PLAYLISTS:
 				performInteraction(CHS_ID_PLAYLISTS,
 						getStringValue(R.string.selectplaylistmanually),

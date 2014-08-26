@@ -29,6 +29,46 @@ public class MainActivity extends Activity {
 	private final int ACTION_SHOWLOCKSCREEN = 1;
 	private final int ACTION_REMOVELOCKSCREEN = 2;
 	private ViewGroup mLockScreenView = null;
+	
+	
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		Log.d("Kyle", "onCreate ");
+		setContentView(R.layout.activity_main);
+		startAppLinkService();
+		lockscreen = (ImageView) findViewById(R.id.lockscreen);
+		IntentFilter intentfilter = new IntentFilter();
+		intentfilter.addAction("com.kyle.lockscreen");
+		registerReceiver(mBR, intentfilter);
+		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
+	}
+
+	public void onResume() {
+		super.onResume();
+		Log.d("Kyle", "onResume showlockscreen:  " + showLockscreen);
+		isAppRunning = true;
+		if (showLockscreen) {
+			showLockscreen();
+		} else {
+			removeLockscreen();
+		}
+	}
+
+	public void onPause() {
+		super.onPause();
+		Log.d("Kyle", "onPause ");
+		isAppRunning = false;
+	}
+
+	public void onDestroy() {
+		super.onDestroy();
+		Log.d("Kyle", "onDestroy ");
+		stopAppLinkService();
+		unregisterReceiver(mBR);
+	}
+	
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			int action = msg.what;
@@ -47,7 +87,6 @@ public class MainActivity extends Activity {
 							Log.d("Kyle", "set lockscreen on");
 						 lockscreen.setVisibility(View.VISIBLE);
 						 }
-
 					}
 				});
 				break;
@@ -72,6 +111,7 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
+	
 	public BroadcastReceiver mBR = new BroadcastReceiver() {
 
 		@Override
@@ -87,67 +127,17 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
-
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		startAppLinkService();
-		lockscreen = (ImageView) findViewById(R.id.lockscreen);
-		// lockscreen.setBackgroundColor(Color.WHITE);
-		// lockscreen.setImageResource(R.drawable.ic_launcher);
-		IntentFilter intentfilter = new IntentFilter();
-		intentfilter.addAction("com.kyle.lockscreen");
-		registerReceiver(mBR, intentfilter);
-		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
-		Log.d("Kyle", "onCreate ");
-
-//		Button button = (Button) findViewById(R.id.button);
-//		button.setOnClickListener(new View.OnClickListener() {
-//
-//			@Override
-//			public void onClick(View v) {
-//				// TODO Auto-generated method stub
-//				addViewOnTop();
-//			}
-//
-//		});
-//		addViewOnTop();
-	}
-
-	public void onResume() {
-		super.onResume();
-		Log.d("Kyle", "onResume showlockscreen:  " + showLockscreen);
-		isAppRunning = true;
-		if (showLockscreen) {
-			showLockscreen();
-		} else {
-			removeLockscreen();
-		}
-	}
-
-	public void onPause() {
-		super.onPause();
-		Log.d("Kyle", "onPause ");
-		isAppRunning = false;
-	}
-
-	public void onDestroy() {
-		super.onDestroy();
-		Log.d("Kyle", "onDestroy ");
-		Intent intent = new Intent();
-		intent.setClass(this, FordService.class);
-		stopService(intent);
-		unregisterReceiver(mBR);
-	}
-
 	public void startAppLinkService() {
 		// if()
 		Intent intent = new Intent();
 		intent.setClass(this, FordService.class);
 		startService(intent);
 	}
-
+	public void stopAppLinkService(){
+		Intent intent = new Intent();
+		intent.setClass(this, FordService.class);
+		stopService(intent);
+	}
 	public static boolean getAppIsRunning() {
 		return isAppRunning;
 	}
