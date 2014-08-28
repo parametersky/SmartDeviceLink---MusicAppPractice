@@ -1,6 +1,7 @@
 package com.ford.onlinemusic;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -21,77 +22,95 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+
+/*
+ * This is the main activity just for demo, in a real app this activity handles the UI
+ */
 public class MainActivity extends Activity {
 
+	private final String TAG = "MainActivity";
+	// lockscreen view
 	private static ImageView lockscreen;
+	
+	// used to indicate whether the activity is foreground.
 	private static boolean isAppRunning = false;
+	
+	// used to indicate whether the lockscreen should be show.
 	private static boolean showLockscreen = false;
+	
 	private final int ACTION_SHOWLOCKSCREEN = 1;
 	private final int ACTION_REMOVELOCKSCREEN = 2;
-	private ViewGroup mLockScreenView = null;
-	
-	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.d("Kyle", "onCreate ");
+		Log.d(TAG, "onCreate ");
 		setContentView(R.layout.activity_main);
+		
+		//start applink service if needed
 		startAppLinkService();
 		lockscreen = (ImageView) findViewById(R.id.lockscreen);
+		
+		//register broadcast receiver for lockscreen broadcast
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction("com.kyle.lockscreen");
 		registerReceiver(mBR, intentfilter);
+		
+		//if MainActivity is started by FordService, get the lockscreen status 
 		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
+		
 	}
 
 	public void onResume() {
 		super.onResume();
-		Log.d("Kyle", "onResume showlockscreen:  " + showLockscreen);
+		Log.d(TAG, "onResume showlockscreen:  " + showLockscreen);
 		isAppRunning = true;
+		
+		// to show lockscreen if needed
 		if (showLockscreen) {
 			showLockscreen();
 		} else {
 			removeLockscreen();
 		}
+		
 	}
 
 	public void onPause() {
 		super.onPause();
-		Log.d("Kyle", "onPause ");
+		Log.d(TAG, "onPause ");
 		isAppRunning = false;
 	}
 
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d("Kyle", "onDestroy ");
+		Log.d(TAG, "onDestroy ");
+		
+		//stop applink service
 		stopAppLinkService();
 		unregisterReceiver(mBR);
 	}
-	
+
+	//handler to show/remove lockscreen
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			int action = msg.what;
 			switch (action) {
 			case ACTION_SHOWLOCKSCREEN:
-				showLockscreen = true;
 				runOnUiThread(new Runnable() {
-
 					@Override
 					public void run() {
 						// TODO Auto-generated method stub
 						if (!isAppRunning)
 							return;
-						 int visibility = lockscreen.getVisibility();
-						 if (visibility == View.GONE) {
-							Log.d("Kyle", "set lockscreen on");
-						 lockscreen.setVisibility(View.VISIBLE);
-						 }
+						int visibility = lockscreen.getVisibility();
+						if (visibility == View.GONE) {
+							Log.d(TAG, "set lockscreen on");
+							lockscreen.setVisibility(View.VISIBLE);
+						}
 					}
 				});
 				break;
 			case ACTION_REMOVELOCKSCREEN:
-				showLockscreen = false;
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -100,7 +119,7 @@ public class MainActivity extends Activity {
 							return;
 						int visibility = lockscreen.getVisibility();
 						if (visibility == View.VISIBLE) {
-							Log.d("Kyle", "set lockscreen off");
+							Log.d(TAG, "set lockscreen off");
 							lockscreen.setVisibility(View.GONE);
 						}
 					}
@@ -111,7 +130,9 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
+
 	
+	//Receiver to receive lockscreen broadcast from FordService
 	public BroadcastReceiver mBR = new BroadcastReceiver() {
 
 		@Override
@@ -127,26 +148,46 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
+
+	/*
+	 * Called in onCreate() to start AppLink service so that the app is
+	 * listening for a SYNC connection in the case the app is installed or
+	 * restarted while the phone is already connected to SYNC.
+	 */
 	public void startAppLinkService() {
-		// if()
-		Intent intent = new Intent();
-		intent.setClass(this, FordService.class);
-		startService(intent);
+		BluetoothAdapter mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+		if (mBtAdapter != null && mBtAdapter.isEnabled()) {
+			Intent intent = new Intent();
+			intent.setClass(this, FordService.class);
+			startService(intent);
+		}
 	}
-	public void stopAppLinkService(){
+
+	/*
+	 * Called in onDestroy() to stop AppLink service when user exits the app or
+	 * the app crashes
+	 */
+	public void stopAppLinkService() {
 		Intent intent = new Intent();
 		intent.setClass(this, FordService.class);
 		stopService(intent);
 	}
+
 	public static boolean getAppIsRunning() {
 		return isAppRunning;
 	}
 
+	/*
+	 * called in lockscreen receiver to show lockscreen
+	 */
 	public void showLockscreen() {
 		mHandler.removeMessages(ACTION_REMOVELOCKSCREEN);
 		mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
 	}
 
+	/*
+	 * called in lockscreen receiver to remove lockscreen
+	 */
 	public void removeLockscreen() {
 		mHandler.removeMessages(ACTION_SHOWLOCKSCREEN);
 		mHandler.sendEmptyMessage(ACTION_REMOVELOCKSCREEN);
@@ -164,7 +205,6 @@ public class MainActivity extends Activity {
 		// Handle action bar item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
 		return super.onOptionsItemSelected(item);
 	}
 }

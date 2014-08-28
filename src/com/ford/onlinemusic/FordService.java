@@ -540,6 +540,10 @@ public class FordService extends Service implements IProxyListenerALM {
 		return traceElement.getMethodName() + "\n";
 	}
 
+	/*
+	 * called by onStartCommand() to create proxy, if proxy has been created
+	 * then do nothing, else create a new one.
+	 */
 	public void startProxy() {
 
 		// check whether current proxy is available, we should avoid to override
@@ -589,6 +593,7 @@ public class FordService extends Service implements IProxyListenerALM {
 			Log.e(TAG, "dispose mSyncProxy failed");
 			e.printStackTrace();
 		}
+		removeLockscreen();
 		stopMusicService();
 		unregisterReceiver(mBR);
 		super.onDestroy();
@@ -611,7 +616,6 @@ public class FordService extends Service implements IProxyListenerALM {
 	@Override
 	public void onOnHMIStatus(OnHMIStatus notification) {
 		// TODO Auto-generated method stub
-		// mActivity.addLogToPanel(this._FUNC_());
 		hmilevel = notification.getHmiLevel();
 		AudioStreamingState state = notification.getAudioStreamingState();
 		switch (hmilevel) {
@@ -622,10 +626,8 @@ public class FordService extends Service implements IProxyListenerALM {
 			Log.d(TAG, "HMI_FULL");
 			// when HMI_FULL arrives, see if the lockscreen is showed.
 			// when the app is exited and the user enter the app again, first
-			// run is false,
-			// we should make sure the lockscreen is on.
+			// run is false,so we should make sure the lockscreen is on.
 			showLockscreen();
-
 			if (notification.getFirstRun()) {
 				// when first run comes, start the activity and register
 				// commands, subscribe buttons, create choicesets(which will not
@@ -669,7 +671,6 @@ public class FordService extends Service implements IProxyListenerALM {
 		intent.putExtra("LOCK", true);
 		sendBroadcast(intent);
 		isLock = true;
-
 	}
 
 	public void removeLockscreen() {
@@ -682,6 +683,11 @@ public class FordService extends Service implements IProxyListenerALM {
 	}
 
 	@Override
+	/*
+	 * (non-Javadoc)
+	 * @see com.ford.syncV4.proxy.interfaces.IProxyListenerBase#onProxyClosed(java.lang.String, java.lang.Exception)
+	 * Called when proxy detects that connection between SYNC and the Phone breaks
+	 */
 	public void onProxyClosed(String info, Exception e) {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onProxyClosed");
@@ -759,9 +765,13 @@ public class FordService extends Service implements IProxyListenerALM {
 	@Override
 	public void onOnCommand(OnCommand notification) {
 		// TODO Auto-generated method stub
-		// ms.onVoiceCommand(notification, correlationID++);
+
+		// get the command id
 		int id = notification.getCmdID();
+		// get the trigger source, a command can be triggered by pressing menu
+		// item in More or using voice command
 		TriggerSource ts = notification.getTriggerSource();
+
 		switch (id) {
 		case CMD_ID_MOSTPOPULAR:
 			currentList = mostpopularsongs;
@@ -769,13 +779,6 @@ public class FordService extends Service implements IProxyListenerALM {
 			startMediaPlayer();
 			break;
 		case CMD_ID_FAVORITES:
-			// if(ts.equals(TriggerSource.TS_MENU)){
-			// pump(getStringValue(R.string.alreadychoose),
-			// getStringValue(R.string.favorites));
-			// } else {
-			// voicePump(getStringValue(R.string.alreadychoose),
-			// getStringValue(R.string.favorites));
-			// }
 			currentList = favoritesSonglist1;
 			MusicPlayerService.setPlayList(currentList);
 			startMediaPlayer();
@@ -813,29 +816,11 @@ public class FordService extends Service implements IProxyListenerALM {
 				voicePump(getStringValue(R.string.nolocalmusic), null);
 			}
 			break;
-		/*
-		 * case 1015: currentList.setRandom(true); isRandom = true; if
-		 * (ts.equals(TriggerSource.TS_MENU)) {
-		 * pump(getStringValue(R.string.randomon), null); } else {
-		 * voicePump(getStringValue(R.string.randomon), null); } try {
-		 * mSyncProxy.deleteCommand(1015, correlationID++); mSyncProxy
-		 * .addCommand( 1016, getStringValue(R.string.randomoff), 1, new
-		 * Vector<String>( Arrays.asList(new String[] {
-		 * getStringValue(R.string.randomoff) })), "0x11", ImageType.STATIC,
-		 * correlationID++); } catch (SyncException e) { // TODO Auto-generated
-		 * catch block e.printStackTrace(); } break; case 1016:
-		 * currentList.setRandom(false); isRandom = false; if
-		 * (ts.equals(TriggerSource.TS_MENU)) {
-		 * pump(getStringValue(R.string.randomoff), null); } else {
-		 * voicePump(getStringValue(R.string.randomoff), null); } try {
-		 * mSyncProxy.deleteCommand(1016, correlationID++); mSyncProxy
-		 * .addCommand( 1015, getStringValue(R.string.randomon), 1, new
-		 * Vector<String>( Arrays.asList(new String[] {
-		 * getStringValue(R.string.randomon) })), "0x11", ImageType.STATIC,
-		 * correlationID++); } catch (SyncException e) { // TODO Auto-generated
-		 * catch block e.printStackTrace(); } break;
-		 */
+
 		case CMD_ID_ADDFAVORITE:
+
+			// different response on different trigger source, if triggered by
+			// menu, give a silent pop-up, else give a voice pop-up
 			if (ts.equals(TriggerSource.TS_MENU)) {
 				pump(getStringValue(R.string.savesuccess), null);
 			} else {
@@ -862,13 +847,6 @@ public class FordService extends Service implements IProxyListenerALM {
 			break;
 
 		case CMD_ID_NEWAGE:
-			// if(ts.equals(TriggerSource.TS_MENU)){
-			// pump(getStringValue(R.string.alreadychoose),
-			// getStringValue(R.string.favorites));
-			// } else {
-			// voicePump(getStringValue(R.string.alreadychoose),
-			// getStringValue(R.string.favorites));
-			// }
 			currentList = newAgeSonglist2;
 			MusicPlayerService.setPlayList(currentList);
 			startMediaPlayer();
@@ -887,21 +865,35 @@ public class FordService extends Service implements IProxyListenerALM {
 		}
 
 		// useless code for setting play mode.
-		if (currentList != null)
-			currentList.setRandom(isRandom);
+		// if (currentList != null)
+		// currentList.setRandom(isRandom);
 	}
 
 	@Override
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.ford.syncV4.proxy.interfaces.IProxyListenerBase#
+	 * onPerformInteractionResponse
+	 * (com.ford.syncV4.proxy.rpc.PerformInteractionResponse) Handle response of
+	 * PerformInteraction
+	 */
 	public void onPerformInteractionResponse(PerformInteractionResponse response) {
 		// TODO Auto-generated method stub
 
 		Log.d(TAG, "response info is " + response.getInfo() + " code is "
 				+ response.getResultCode());
-
+		// if success continue,else do nothing
 		if (response.getSuccess()) {
+			// get choice id user has selected. If choices never change, they
+			// can be sent to SYNC using RPC CreateInteractionChoiceSet when get
+			// HMI_FULL first time. Else, they should be sent before
+			// PerformInteraction is called.
 			int choiceid = response.getChoiceID();
 			switch (choiceid) {
 			case 1031:
+				// if user select playlist that is playing, give the user a
+				// notification
 				if (currentList.equals(favoritesSonglist1)) {
 					voicePump(getStringValue(R.string.nowplayinglist),
 							favoritesSonglist1.ListName);
@@ -943,8 +935,10 @@ public class FordService extends Service implements IProxyListenerALM {
 				break;
 			}
 		}
-		if (currentList != null)
-			currentList.setRandom(isRandom);
+
+		// // useless code
+		// if (currentList != null)
+		// currentList.setRandom(isRandom);
 	}
 
 	@Override
@@ -994,6 +988,9 @@ public class FordService extends Service implements IProxyListenerALM {
 
 		ButtonName name = notification.getButtonName();
 		Log.d(TAG, "onButtonPress " + name);
+		// if button name is custom_button, that means the soft button has been
+		// pressed
+		// so get the id of the button and do something.
 		if (name.equals(ButtonName.CUSTOM_BUTTON)) {
 			int id = notification.getCustomButtonName();
 
@@ -1006,29 +1003,6 @@ public class FordService extends Service implements IProxyListenerALM {
 				pauseMediaPlayer();
 				break;
 
-			// case 1023:
-			// voicePump(getStringValue(R.string.alreadychoose),
-			// getStringValue(R.string.local));
-			// if (localsongs.size() > 1) {
-			// currentList = localsongs;
-			// MusicPlayerService.setPlayList(currentList);
-			// startMediaPlayer();
-			// if (mHighlightedSonglistButton != null)
-			// mHighlightedSonglistButton.setIsHighlighted(false);
-			// localbutton.setIsHighlighted(true);
-			// mHighlightedSonglistButton = localbutton;
-			// try {
-			// mSyncProxy.show(null, null, null, null, null, null,
-			// null, null, mCommonSoftbutton, null, null,
-			// correlationID++);
-			// } catch (SyncException e) {
-			// // TODO Auto-generated catch block
-			// e.printStackTrace();
-			// }
-			// } else {
-			// voicePump(getStringValue(R.string.nolocalmusic), null);
-			// }
-			// break;
 			case BTN_ID_PLAYLISTS:
 				performInteraction(CHS_ID_PLAYLISTS,
 						getStringValue(R.string.selectplaylistmanually),
@@ -1094,7 +1068,6 @@ public class FordService extends Service implements IProxyListenerALM {
 		}
 		if (currentList != null)
 			currentList.setRandom(isRandom);
-
 	}
 
 	@Override

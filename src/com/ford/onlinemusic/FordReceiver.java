@@ -6,7 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-
+/*
+ * Receiver for listening for Android OS broad cast intents to start/stop FordService
+ */
 public class FordReceiver extends BroadcastReceiver {
 
 	private final String TAG = "FordReceiver";
