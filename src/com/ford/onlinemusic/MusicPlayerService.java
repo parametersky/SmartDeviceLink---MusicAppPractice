@@ -27,6 +27,9 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
+/*
+ * Music Player Service: 
+ */
 public class MusicPlayerService extends Service implements OnErrorListener,
 		OnCompletionListener, OnPreparedListener {
 

@@ -76,7 +76,14 @@ import com.ford.syncV4.proxy.rpc.enums.TriggerSource;
 import com.ford.syncV4.proxy.rpc.enums.UpdateMode;
 
 //import android.util.Log;
-
+/*
+ * Main implementation of AppLink, responsible for:
+ * 1. create/dispose SyncProxyALM, handle connection with SYNC
+ * 2. building UI on SYNC, when get HMI_FULL first time, send show, addcommand to SYNC.
+ * 3. handling user action with SYNC and notification from SYNC.
+ * 4. send lockscreen broadcast to MainActivity.
+ * 5. update Music Player Service status to SYNC
+ */
 public class FordService extends Service implements IProxyListenerALM {
 
 	private static final int CMD_ID_MOSTPOPULAR = 1011;
