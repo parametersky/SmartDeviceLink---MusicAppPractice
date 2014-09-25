@@ -72,6 +72,7 @@ import com.ford.syncV4.proxy.rpc.enums.InteractionMode;
 import com.ford.syncV4.proxy.rpc.enums.Language;
 import com.ford.syncV4.proxy.rpc.enums.SoftButtonType;
 import com.ford.syncV4.proxy.rpc.enums.SystemAction;
+import com.ford.syncV4.proxy.rpc.enums.TextAlignment;
 import com.ford.syncV4.proxy.rpc.enums.TriggerSource;
 import com.ford.syncV4.proxy.rpc.enums.UpdateMode;
 
@@ -129,12 +130,16 @@ public class FordService extends Service implements IProxyListenerALM {
 	private boolean isPaused = false;
 	private boolean isLock = false;
 	private boolean isRandom = false;
+	private boolean getFirstRun = false;
 
 	private BroadcastReceiver mBR = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// TODO Auto-generated method stub
+			if(!getFirstRun){
+				return;
+			}
 			Log.d(TAG,
 					"mBR song'status "
 							+ intent.getStringExtra(MusicPlayerService.DATA_STATUS));
@@ -155,7 +160,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					if (status.equalsIgnoreCase("Buffering")) {
 						mSyncProxy.show(name, artist, null, null, null, null,
 								getStringValue(R.string.bufferring), null,
-								null, null, null, correlationID++);
+								null, null, TextAlignment.CENTERED, correlationID++);
 						mSyncProxy.setMediaClockTimer(null, null, null,
 								UpdateMode.CLEAR, correlationID++);
 					} else if (status.equalsIgnoreCase("paused")) {
@@ -184,7 +189,7 @@ public class FordService extends Service implements IProxyListenerALM {
 						}
 						mSyncProxy.show(name, artist, null, null, null, null,
 								currentList.ListName, null, mCommonSoftbutton,
-								null, null, correlationID++);
+								null, TextAlignment.CENTERED, correlationID++);
 						int minutes = length / 60;
 						int seconds = length % 60;
 						Log.d(TAG, "isPaused: " + isPaused);
@@ -322,7 +327,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		playbutton.setIsHighlighted(false);
 		playbutton.setSystemAction(SystemAction.DEFAULT_ACTION);
 		playbutton.setType(SoftButtonType.SBT_IMAGE);
-		mCommonSoftbutton.add(playbutton);
+		mCommonSoftbutton.add(pausebutton1);
 
 		favoritebutton = new SoftButton();
 		favoritebutton.setType(SoftButtonType.SBT_TEXT);
@@ -427,7 +432,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					.addCommand(
 							CMD_ID_FAVORITES,
 							getStringValue(R.string.favorites),
-							0,
+							1,
 							new Vector<String>(
 									Arrays.asList(new String[] { getStringValue(R.string.favorites) })),
 							"0x11", ImageType.STATIC, correlationID++);
@@ -435,7 +440,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					.addCommand(
 							CMD_ID_LOCAL,
 							getStringValue(R.string.local),
-							0,
+							3,
 							new Vector<String>(
 									Arrays.asList(new String[] { getStringValue(R.string.local) })),
 							null, null, correlationID++);
@@ -446,7 +451,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					.addCommand(
 							CMD_ID_ADDFAVORITE,
 							getStringValue(R.string.addfavorite),
-							0,
+							5,
 							new Vector<String>(
 									Arrays.asList(new String[] { getStringValue(R.string.addfavorite) })),
 							"0x11", ImageType.STATIC, correlationID++);
@@ -454,7 +459,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					.addCommand(
 							CMD_ID_SONGINFO,
 							getStringValue(R.string.songinfo),
-							0,
+							4,
 							new Vector<String>(
 									Arrays.asList(new String[] { getStringValue(R.string.songinfo) })),
 							"0x11", ImageType.STATIC, correlationID++);
@@ -479,7 +484,7 @@ public class FordService extends Service implements IProxyListenerALM {
 					.addCommand(
 							CMD_ID_NEWAGE,
 							getStringValue(R.string.newage),
-							0,
+							2,
 							new Vector<String>(
 									Arrays.asList(new String[] { getStringValue(R.string.newage) })),
 							"0x11", ImageType.STATIC, correlationID++);
@@ -642,6 +647,7 @@ public class FordService extends Service implements IProxyListenerALM {
 				// entire life cycle).
 				startMainActivity();
 				sendTrackData();
+				getFirstRun = true;
 			} else {
 				if (!isPaused) {
 					startMediaPlayer();
@@ -692,8 +698,11 @@ public class FordService extends Service implements IProxyListenerALM {
 	@Override
 	/*
 	 * (non-Javadoc)
-	 * @see com.ford.syncV4.proxy.interfaces.IProxyListenerBase#onProxyClosed(java.lang.String, java.lang.Exception)
-	 * Called when proxy detects that connection between SYNC and the Phone breaks
+	 * 
+	 * @see
+	 * com.ford.syncV4.proxy.interfaces.IProxyListenerBase#onProxyClosed(java
+	 * .lang.String, java.lang.Exception) Called when proxy detects that
+	 * connection between SYNC and the Phone breaks
 	 */
 	public void onProxyClosed(String info, Exception e) {
 		// TODO Auto-generated method stub
