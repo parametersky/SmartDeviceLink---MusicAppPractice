@@ -106,4 +106,12 @@ public class SongList {
 	public SongData getCurrSong() {
 		return SongList.get(CurrentSong);
 	}
+	
+	public ArrayList<String> getAllSongInfo(){
+		ArrayList<String> songsinfo = new ArrayList<String>();
+		for( SongData song:SongList){
+			songsinfo.add(song.getArtist()+" - "+song.getName());
+		}
+		return songsinfo;
+	}
 }

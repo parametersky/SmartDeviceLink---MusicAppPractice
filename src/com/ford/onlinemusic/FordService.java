@@ -210,7 +210,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		Cursor cursor = getContentResolver().query(
 				uri,
 				new String[] { MediaStore.Audio.Media._ID,
-						MediaStore.Audio.Media.DISPLAY_NAME,
+						MediaStore.Audio.Media.TITLE,
 						MediaStore.Audio.Media.ARTIST,
 						MediaStore.Audio.Media.ALBUM,
 						MediaStore.Audio.Media.DATA }, null, null, null);
@@ -224,8 +224,8 @@ public class FordService extends Service implements IProxyListenerALM {
 		}
 	}
 
-	public void buildRandomSongList() {
-
+	public void buildSongList() {
+		buildLocalSongList();
 		mostpopularsongs = new SongList(getStringValue(R.string.mostpopular));
 		mostpopularsongs
 				.addSong(new SongData("小苹果", "筷子兄弟", "",
@@ -236,11 +236,6 @@ public class FordService extends Service implements IProxyListenerALM {
 		mostpopularsongs
 				.addSong(new SongData("同桌的你", "胡夏", "",
 						"http://cc.stream.qqmusic.qq.com/C1000031zaiZ2ZmBYj.m4a?fromtag=52"));
-	}
-
-	public void buildSongList() {
-		buildLocalSongList();
-		buildRandomSongList();
 		favoritesSonglist1 = new SongList(getStringValue(R.string.favorites));
 		newAgeSonglist2 = new SongList(getStringValue(R.string.newage));
 		favoritesSonglist1
@@ -612,9 +607,10 @@ public class FordService extends Service implements IProxyListenerALM {
 	}
 
 	public void stopMusicService() {
-		Intent intent = new Intent();
-		intent.setClass(this, MusicPlayerService.class);
-		stopService(intent);
+//		Intent intent = new Intent();
+//		intent.setClass(this, MusicPlayerService.class);
+//		stopService(intent);
+		sendCommand(MusicPlayerService.CMD_PAUSE);
 	}
 
 	public void startMainActivity() {
@@ -709,7 +705,6 @@ public class FordService extends Service implements IProxyListenerALM {
 		Log.d(TAG, "onProxyClosed");
 		removeLockscreen();
 		stopMusicService();
-
 		SyncExceptionCause cause = ((SyncException) e).getSyncExceptionCause();
 		if (cause != SyncExceptionCause.SYNC_PROXY_CYCLED
 				&& cause != SyncExceptionCause.BLUETOOTH_DISABLED) {
