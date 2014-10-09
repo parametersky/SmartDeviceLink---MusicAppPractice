@@ -2,6 +2,8 @@ package com.ford.onlinemusic;
 
 
 
+import com.ford.onlinemusic.applink.AppLinkService;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -60,7 +62,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// TODO Auto-generated method stub
-			Log.d(TAG,
+			Log.i(TAG,
 					"mBR song'status "
 							+ intent.getStringExtra(MusicPlayerService.DATA_STATUS));
 			String action = intent.getAction();
@@ -108,7 +110,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.d(TAG, "onCreate ");
+		Log.i(TAG, "onCreate ");
 		setContentView(R.layout.activity_main);
 		buildSongList();
 		initUIComponent();
@@ -126,14 +128,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		intentfilter.addAction("com.kyle.lockscreen");
 		registerReceiver(mBR, intentfilter);
 
-		// if MainActivity is started by FordService, get the lockscreen status
+		// if MainActivity is started by AppLinkService, get the lockscreen status
 		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
 
 	}
 
 	public void onResume() {
 		super.onResume();
-		Log.d(TAG, "onResume showlockscreen:  " + showLockscreen);
+		Log.i(TAG, "onResume showlockscreen:  " + showLockscreen);
 		isAppRunning = true;
 
 		// to show lockscreen if needed
@@ -147,13 +149,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 	public void onPause() {
 		super.onPause();
-		Log.d(TAG, "onPause ");
+		Log.i(TAG, "onPause ");
 		isAppRunning = false;
 	}
 
 	public void onDestroy() {
 		super.onDestroy();
-		Log.d(TAG, "onDestroy ");
+		Log.i(TAG, "onDestroy ");
 
 		// stop applink service
 		stopAppLinkService();
@@ -174,7 +176,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 							return;
 						int visibility = lockscreen.getVisibility();
 						if (visibility == View.GONE) {
-							Log.d(TAG, "set lockscreen on");
+							Log.i(TAG, "set lockscreen on");
 							lockscreen.setVisibility(View.VISIBLE);
 						}
 					}
@@ -189,7 +191,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 							return;
 						int visibility = lockscreen.getVisibility();
 						if (visibility == View.VISIBLE) {
-							Log.d(TAG, "set lockscreen off");
+							Log.i(TAG, "set lockscreen off");
 							lockscreen.setVisibility(View.GONE);
 						}
 					}
@@ -201,14 +203,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		}
 	};
 
-	// Receiver to receive lockscreen broadcast from FordService
+	// Receiver to receive lockscreen broadcast from AppLinkService
 	public BroadcastReceiver mBR = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// TODO Auto-generated method stub
 			boolean isLock = intent.getBooleanExtra("LOCK", false);
-			Log.d("Kyle MainActivity", "onReceive lockscreen: " + isLock);
+			Log.i("Kyle MainActivity", "onReceive lockscreen: " + isLock);
 			showLockscreen = isLock;
 			if (isLock) {
 				mHandler.sendEmptyMessage(ACTION_SHOWLOCKSCREEN);
@@ -227,7 +229,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		BluetoothAdapter mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (mBtAdapter != null && mBtAdapter.isEnabled()) {
 			Intent intent = new Intent();
-			intent.setClass(this, FordService.class);
+			intent.setClass(this, AppLinkService.class);
 			startService(intent);
 		}
 	}
@@ -238,7 +240,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	 */
 	public void stopAppLinkService() {
 		Intent intent = new Intent();
-		intent.setClass(this, FordService.class);
+		intent.setClass(this, AppLinkService.class);
 		stopService(intent);
 	}
 

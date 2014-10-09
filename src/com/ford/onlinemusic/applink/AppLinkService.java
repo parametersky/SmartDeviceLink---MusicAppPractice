@@ -1,4 +1,4 @@
-package com.ford.onlinemusic;
+package com.ford.onlinemusic.applink;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -11,10 +11,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Audio.Playlists;
 import android.util.Log;
 
+import com.ford.onlinemusic.MainActivity;
+import com.ford.onlinemusic.MusicPlayerService;
+import com.ford.onlinemusic.R;
+import com.ford.onlinemusic.SongData;
+import com.ford.onlinemusic.SongList;
+import com.ford.onlinemusic.R.string;
 import com.ford.syncV4.exception.SyncException;
 import com.ford.syncV4.exception.SyncExceptionCause;
 import com.ford.syncV4.proxy.SyncProxyALM;
@@ -80,12 +89,12 @@ import com.ford.syncV4.proxy.rpc.enums.UpdateMode;
 /*
  * Main implementation of AppLink, responsible for:
  * 1. create/dispose SyncProxyALM, handle connection with SYNC
- * 2. building UI on SYNC, when get HMI_FULL first time, send show, addcommand to SYNC.
+ * 2. building UI on SYNC, when get HMI_FULL first time, send show, addcommand, createchoiceset to SYNC.
  * 3. handling user action with SYNC and notification from SYNC.
  * 4. send lockscreen broadcast to MainActivity.
- * 5. update Music Player Service status to SYNC
+ * 5. update Music Player Service status on SYNC
  */
-public class FordService extends Service implements IProxyListenerALM {
+public class AppLinkService extends Service implements IProxyListenerALM {
 
 	private static final int CMD_ID_MOSTPOPULAR = 1011;
 	private static final int CMD_ID_FAVORITES = 1012;
@@ -100,9 +109,9 @@ public class FordService extends Service implements IProxyListenerALM {
 	private static final int BTN_ID_FAVORITE = 1313;
 	private static final int BTN_ID_UNFAVORITE = 1316;
 	private static final int CHS_ID_PLAYLISTS = 1041;
-	private static FordService instance = null;
+	private static AppLinkService instance = null;
 	private SyncProxyALM mSyncProxy = null;
-	private final String TAG = "FordService";
+	private final String TAG = "AppLinkService";
 	private int correlationID = 1;
 	private HMILevel hmilevel = null;
 
@@ -132,15 +141,24 @@ public class FordService extends Service implements IProxyListenerALM {
 	private boolean isRandom = false;
 	private boolean getFirstRun = false;
 
+	private String mPlayerStatus = null;
+
+	private final Handler mHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			Log.i("Kyle", "lenght is " + msg.arg1);
+			handlePlayerStatusChange(mPlayerStatus, msg.arg1);
+		}
+
+	};
 	private BroadcastReceiver mBR = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// TODO Auto-generated method stub
-			if(!getFirstRun){
+			if (!getFirstRun) {
 				return;
 			}
-			Log.d(TAG,
+			Log.i(TAG,
 					"mBR song'status "
 							+ intent.getStringExtra(MusicPlayerService.DATA_STATUS));
 			String action = intent.getAction();
@@ -155,54 +173,62 @@ public class FordService extends Service implements IProxyListenerALM {
 						.getStringExtra(MusicPlayerService.DATA_INDEX);
 				int length = intent.getIntExtra(MusicPlayerService.DATA_LENGTH,
 						0);
-				try {
 
-					if (status.equalsIgnoreCase("Buffering")) {
-						mSyncProxy.show(name, artist, null, null, null, null,
-								getStringValue(R.string.bufferring), null,
-								null, null, TextAlignment.CENTERED, correlationID++);
-						mSyncProxy.setMediaClockTimer(null, null, null,
-								UpdateMode.CLEAR, correlationID++);
-					} else if (status.equalsIgnoreCase("paused")) {
-						mCommonSoftbutton.remove(0);
-						mCommonSoftbutton.add(0, pausebutton1);
-						mSyncProxy.show(null, null, null, null, null, null,
-								getStringValue(R.string.paused), null,
-								mCommonSoftbutton, null, null, correlationID++);
-						mSyncProxy.setMediaClockTimer(null, null, null,
-								UpdateMode.PAUSE, correlationID++);
+				mPlayerStatus = status;
+				Message msg = new Message();
+				msg.what = 1;
+				msg.arg1 = length;
+				mHandler.removeMessages(1);
+				mHandler.sendMessageDelayed(msg, 200);
 
-					} else if (status.equalsIgnoreCase("network_error")) {
-						mSyncProxy.show(null, null, null, null, null, null,
-								getStringValue(R.string.networkerror), null,
-								null, null, null, correlationID++);
-
-					} else if (status.equalsIgnoreCase("playing")) {
-						mCommonSoftbutton.remove(0);
-						mCommonSoftbutton.add(0, playbutton);
-						if (favoritesSonglist1.findSong(name) != -1) {
-							mCommonSoftbutton.remove(1);
-							mCommonSoftbutton.add(1, unfavoritebutton);
-						} else {
-							mCommonSoftbutton.remove(1);
-							mCommonSoftbutton.add(1, favoritebutton);
-						}
-						mSyncProxy.show(name, artist, null, null, null, null,
-								currentList.ListName, null, mCommonSoftbutton,
-								null, TextAlignment.CENTERED, correlationID++);
-						int minutes = length / 60;
-						int seconds = length % 60;
-						Log.d(TAG, "isPaused: " + isPaused);
-						mSyncProxy.setMediaClockTimer(0, minutes, seconds,
-								UpdateMode.COUNTUP, correlationID++);
-						isPaused = false;
-					}
-				} catch (SyncException e) {
-					e.printStackTrace();
-				}
 			}
 		}
 	};
+
+	public void handlePlayerStatusChange(String status, int length) {
+		Log.i("Kyle", "handle player status change: " + status);
+		SongData song = currentList.getCurrSong();
+		String name = song.getName();
+		String artist = song.getArtist();
+		try {
+			if (status.equalsIgnoreCase("Buffering")) {
+				mSyncProxy.setMediaClockTimer(null, null, null,
+						UpdateMode.PAUSE, correlationID++);
+				mSyncProxy.show(name, artist, null, null, null, null,
+						getStringValue(R.string.bufferring), null, null, null,
+						TextAlignment.CENTERED, correlationID++);
+			} else if (status.equalsIgnoreCase("paused")) {
+				mCommonSoftbutton.remove(0);
+				mCommonSoftbutton.add(0, pausebutton1);
+				mSyncProxy.setMediaClockTimer(null, null, null,
+						UpdateMode.PAUSE, correlationID++);
+				mSyncProxy.show(null, null, null, null, null, null,
+						getStringValue(R.string.paused), null,
+						mCommonSoftbutton, null, null, correlationID++);
+
+			} else if (status.equalsIgnoreCase("network_error")) {
+				mSyncProxy.show(null, null, null, null, null, null,
+						getStringValue(R.string.networkerror), null, null,
+						null, null, correlationID++);
+
+			} else if (status.equalsIgnoreCase("playing")) {
+				mCommonSoftbutton.remove(0);
+				mCommonSoftbutton.add(0, playbutton);
+				int minutes = length / 60;
+				int seconds = length % 60;
+				Log.i(TAG, "isPaused: " + isPaused);
+				mSyncProxy.setMediaClockTimer(0, minutes, seconds,
+						UpdateMode.COUNTUP, correlationID++);
+				mSyncProxy.show(name, artist, null, null, null, null,
+						currentList.ListName, null, mCommonSoftbutton, null,
+						TextAlignment.CENTERED, correlationID++);
+
+				isPaused = false;
+			}
+		} catch (SyncException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void buildLocalSongList() {
 		localsongs = new SongList(getStringValue(R.string.local));
@@ -401,13 +427,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		buildPlaylistChoiceSet();
 		buildTrackSoftButton();
 		try {
-			currentList = favoritesSonglist1;
-			MusicPlayerService.setPlayList(favoritesSonglist1);
-			startMediaPlayer();
-			SongData song = currentList.getSong(currentList.CurrentSong);
-			mSyncProxy.show(song.getName(), song.getArtist(), null, null, null,
-					null, currentList.ListName, null, mCommonSoftbutton, null,
-					null, correlationID++);
+			startPlayList(favoritesSonglist1);
 
 			mSyncProxy.subscribeButton(ButtonName.OK, correlationID++);
 			mSyncProxy.subscribeButton(ButtonName.PRESET_7, correlationID++);
@@ -491,6 +511,52 @@ public class FordService extends Service implements IProxyListenerALM {
 		}
 	}
 
+	public void startPlayList(SongList list) {
+		if (currentList == list) {
+			return;
+		}
+		currentList = list;
+		MusicPlayerService.setPlayList(list);
+		startMediaPlayer();
+		updateScreenSongInfo(currentList.getSong(currentList.CurrentSong));
+
+	}
+
+	public void updateScreenSongInfo(SongData song) {
+		// default set the song is not in the favorite list.
+		Log.i("Kyle", "update Screen Song Info");
+		mCommonSoftbutton.remove(0);
+		mCommonSoftbutton.add(0, pausebutton1);
+		if (favoritesSonglist1.findSong(song.getName()) != -1) {
+			mCommonSoftbutton.remove(1);
+			mCommonSoftbutton.add(1, unfavoritebutton);
+		} else {
+			mCommonSoftbutton.remove(1);
+			mCommonSoftbutton.add(1, favoritebutton);
+		}
+		try {
+			mSyncProxy.setMediaClockTimer(null, null, null, UpdateMode.CLEAR,
+					correlationID++);
+			mSyncProxy.show(song.getName(), song.getArtist(), null, null, null,
+					null, getStringValue(R.string.bufferring), null, mCommonSoftbutton, null,
+					null, correlationID++);
+
+		} catch (SyncException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void playNext() {
+		sendCommand(MusicPlayerService.CMD_NEXT);
+		updateScreenSongInfo(currentList.getCurrSong());
+	}
+
+	public void playPrev() {
+		sendCommand(MusicPlayerService.CMD_PREV);
+		updateScreenSongInfo(currentList.getCurrSong());
+	}
+
 	public void startMediaPlayer() {
 		sendCommand(MusicPlayerService.CMD_START);
 		// isPaused = false;
@@ -505,7 +571,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		sendCommand(MusicPlayerService.CMD_PAUSE);
 	}
 
-	public static FordService getInstance() {
+	public static AppLinkService getInstance() {
 		return instance;
 	}
 
@@ -521,7 +587,7 @@ public class FordService extends Service implements IProxyListenerALM {
 
 	public void onCreate() {
 		super.onCreate();
-		Log.d(TAG, "onCreate");
+		Log.i(TAG, "onCreate");
 		instance = this;
 
 		// start music player service
@@ -537,7 +603,7 @@ public class FordService extends Service implements IProxyListenerALM {
 
 	@Override
 	public int onStartCommand(Intent intent, int flag, int startId) {
-		Log.d(TAG, "onStartCommand");
+		Log.i(TAG, "onStartCommand");
 		startProxy();
 		return 0;
 	}
@@ -559,14 +625,14 @@ public class FordService extends Service implements IProxyListenerALM {
 			return;
 		}
 		try {
-			Log.d(TAG, "onStartCommand to connect with SYNC using SyncProxyALM");
+			Log.i(TAG, "onStartCommand to connect with SYNC using SyncProxyALM");
 
 			// get current system's language to decide HMI language.
 			// this is just for this particular app.
 			Language language = null;
 			Locale locale = Locale.getDefault();
 			String lang = locale.getDisplayLanguage();
-			Log.d(TAG, "language is " + lang);
+			Log.i(TAG, "language is " + lang);
 			if (lang.contains("中文")) {
 				language = Language.ZH_CN;
 			} else {
@@ -579,7 +645,7 @@ public class FordService extends Service implements IProxyListenerALM {
 
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
-			Log.d(TAG, e.getMessage());
+			Log.i(TAG, e.getMessage());
 
 			if (mSyncProxy == null)
 				stopSelf();
@@ -607,9 +673,9 @@ public class FordService extends Service implements IProxyListenerALM {
 	}
 
 	public void stopMusicService() {
-//		Intent intent = new Intent();
-//		intent.setClass(this, MusicPlayerService.class);
-//		stopService(intent);
+		// Intent intent = new Intent();
+		// intent.setClass(this, MusicPlayerService.class);
+		// stopService(intent);
 		sendCommand(MusicPlayerService.CMD_PAUSE);
 	}
 
@@ -624,14 +690,29 @@ public class FordService extends Service implements IProxyListenerALM {
 	@Override
 	public void onOnHMIStatus(OnHMIStatus notification) {
 		// TODO Auto-generated method stub
+		
 		hmilevel = notification.getHmiLevel();
+		
 		AudioStreamingState state = notification.getAudioStreamingState();
+		
+		switch (state) {
+		case AUDIBLE:
+			if (!isPaused)
+				startMediaPlayer();
+			break;
+		case NOT_AUDIBLE:
+			stopMediaPlayer();
+			break;
+		case ATTENUATED:
+			break;
+		}
+		
 		switch (hmilevel) {
 		case HMI_BACKGROUND:
-			Log.d(TAG, "HMI_BACKGOUND");
+			Log.i(TAG, "HMI_BACKGOUND");
 			break;
 		case HMI_FULL:
-			Log.d(TAG, "HMI_FULL");
+			Log.i(TAG, "HMI_FULL");
 			// when HMI_FULL arrives, see if the lockscreen is showed.
 			// when the app is exited and the user enter the app again, first
 			// run is false,so we should make sure the lockscreen is on.
@@ -651,26 +732,16 @@ public class FordService extends Service implements IProxyListenerALM {
 			}
 			break;
 		case HMI_NONE:
-			Log.d(TAG, "HMI_NONE");
+			Log.i(TAG, "HMI_NONE");
 			// remove the lockscreen and stop playing music.
 			removeLockscreen();
 			stopMediaPlayer();
 		case HMI_LIMITED:
-			Log.d(TAG, "HMI_LIMITED");
+			Log.i(TAG, "HMI_LIMITED");
 		default:
 			break;
 		}
-		switch (state) {
-		case AUDIBLE:
-			if (!isPaused)
-				startMediaPlayer();
-			break;
-		case NOT_AUDIBLE:
-			stopMediaPlayer();
-			break;
-		case ATTENUATED:
-			break;
-		}
+		
 	}
 
 	public void showLockscreen() {
@@ -702,7 +773,7 @@ public class FordService extends Service implements IProxyListenerALM {
 	 */
 	public void onProxyClosed(String info, Exception e) {
 		// TODO Auto-generated method stub
-		Log.d(TAG, "onProxyClosed");
+		Log.i(TAG, "onProxyClosed");
 		removeLockscreen();
 		stopMusicService();
 		SyncExceptionCause cause = ((SyncException) e).getSyncExceptionCause();
@@ -724,7 +795,7 @@ public class FordService extends Service implements IProxyListenerALM {
 	@Override
 	public void onAddCommandResponse(AddCommandResponse response) {
 		// TODO Auto-generated method stub
-		Log.d(TAG, "Add command done for " + response.getCorrelationID()
+		Log.i(TAG, "Add command done for " + response.getCorrelationID()
 				+ " result is " + response.getResultCode());
 	}
 
@@ -785,23 +856,10 @@ public class FordService extends Service implements IProxyListenerALM {
 
 		switch (id) {
 		case CMD_ID_MOSTPOPULAR:
-			currentList = mostpopularsongs;
-			MusicPlayerService.setPlayList(currentList);
-			startMediaPlayer();
+			startPlayList(mostpopularsongs);
 			break;
 		case CMD_ID_FAVORITES:
-			currentList = favoritesSonglist1;
-			MusicPlayerService.setPlayList(currentList);
-			startMediaPlayer();
-			if (mHighlightedSonglistButton != null)
-				mHighlightedSonglistButton.setIsHighlighted(false);
-			try {
-				mSyncProxy.show(null, null, null, null, null, null, null, null,
-						mCommonSoftbutton, null, null, correlationID++);
-			} catch (SyncException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			startPlayList(favoritesSonglist1);
 			break;
 		case CMD_ID_PLAYLISTS:
 			// use different response on the trigger source.
@@ -820,9 +878,7 @@ public class FordService extends Service implements IProxyListenerALM {
 			break;
 		case CMD_ID_LOCAL:
 			if (localsongs.size() > 1) {
-				currentList = localsongs;
-				MusicPlayerService.setPlayList(currentList);
-				startMediaPlayer();
+				startPlayList(localsongs);
 			} else {
 				voicePump(getStringValue(R.string.nolocalmusic), null);
 			}
@@ -858,18 +914,7 @@ public class FordService extends Service implements IProxyListenerALM {
 			break;
 
 		case CMD_ID_NEWAGE:
-			currentList = newAgeSonglist2;
-			MusicPlayerService.setPlayList(currentList);
-			startMediaPlayer();
-			if (mHighlightedSonglistButton != null)
-				mHighlightedSonglistButton.setIsHighlighted(false);
-			try {
-				mSyncProxy.show(null, null, null, null, null, null, null, null,
-						mCommonSoftbutton, null, null, correlationID++);
-			} catch (SyncException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			startPlayList(newAgeSonglist2);
 			break;
 		default:
 			break;
@@ -892,7 +937,7 @@ public class FordService extends Service implements IProxyListenerALM {
 	public void onPerformInteractionResponse(PerformInteractionResponse response) {
 		// TODO Auto-generated method stub
 
-		Log.d(TAG, "response info is " + response.getInfo() + " code is "
+		Log.i(TAG, "response info is " + response.getInfo() + " code is "
 				+ response.getResultCode());
 		// if success continue,else do nothing
 		if (response.getSuccess()) {
@@ -910,18 +955,7 @@ public class FordService extends Service implements IProxyListenerALM {
 							favoritesSonglist1.ListName);
 					return;
 				}
-				currentList = favoritesSonglist1;
-				MusicPlayerService.setPlayList(currentList);
-				startMediaPlayer();
-				SongData song = currentList.getSong(currentList.CurrentSong);
-				try {
-					mSyncProxy.show(song.getName(), song.getArtist(), null,
-							null, null, null, currentList.ListName, null, null,
-							null, null, correlationID++);
-				} catch (SyncException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				startPlayList(favoritesSonglist1);
 				break;
 			case 1032:
 				if (currentList.equals(newAgeSonglist2)) {
@@ -929,18 +963,7 @@ public class FordService extends Service implements IProxyListenerALM {
 							newAgeSonglist2.ListName);
 					return;
 				}
-				currentList = newAgeSonglist2;
-				MusicPlayerService.setPlayList(currentList);
-				startMediaPlayer();
-				SongData song1 = currentList.getSong(currentList.CurrentSong);
-				try {
-					mSyncProxy.show(song1.getName(), song1.getArtist(), null,
-							null, null, null, currentList.ListName, null, null,
-							null, null, correlationID++);
-				} catch (SyncException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				startPlayList(newAgeSonglist2);
 				break;
 			default:
 				break;
@@ -998,7 +1021,7 @@ public class FordService extends Service implements IProxyListenerALM {
 		// TODO Auto-generated method stub
 
 		ButtonName name = notification.getButtonName();
-		Log.d(TAG, "onButtonPress " + name);
+		Log.i(TAG, "onButtonPress " + name);
 		// if button name is custom_button, that means the soft button has been
 		// pressed
 		// so get the id of the button and do something.
@@ -1041,6 +1064,9 @@ public class FordService extends Service implements IProxyListenerALM {
 				mCommonSoftbutton.add(1, favoritebutton);
 				favoritesSonglist1.removeSong(favoritesSonglist1
 						.findSong(currentList.getCurrSong().getName()));
+				if (currentList == favoritesSonglist1) {
+					sendCommand(MusicPlayerService.CMD_NEXT);
+				}
 				try {
 					mSyncProxy.show(null, null, null, null, null,
 							mCommonSoftbutton, null, null, correlationID++);
@@ -1051,25 +1077,10 @@ public class FordService extends Service implements IProxyListenerALM {
 				break;
 			}
 		} else if (name.equals(ButtonName.SEEKLEFT)) {
-			sendCommand(MusicPlayerService.CMD_PREV);
-			try {
-				mSyncProxy.setMediaClockTimer(null, null, null,
-						UpdateMode.CLEAR, correlationID++);
-			} catch (SyncException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			playPrev();
 
 		} else if (name.equals(ButtonName.SEEKRIGHT)) {
-			sendCommand(MusicPlayerService.CMD_NEXT);
-			try {
-				mSyncProxy.setMediaClockTimer(null, null, null,
-						UpdateMode.CLEAR, correlationID++);
-			} catch (SyncException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			// }
+			playNext();
 		} else if (name.equals(ButtonName.OK)) {
 			if (isPaused) {
 				startMediaPlayer();
@@ -1147,7 +1158,7 @@ public class FordService extends Service implements IProxyListenerALM {
 	public void onPerformAudioPassThruResponse(
 			PerformAudioPassThruResponse response) {
 		// TODO Auto-generated method stub
-		Log.d(TAG, "onPerformAudioPassThru response: " + response.getInfo());
+		Log.i(TAG, "onPerformAudioPassThru response: " + response.getInfo());
 
 	}
 

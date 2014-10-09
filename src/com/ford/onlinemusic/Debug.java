@@ -51,7 +51,7 @@ public class Debug {
 	}
 	public static void DebugLog(String str){
 		if (DEBUG){
-			Log.d(TAG, str);
+			Log.i(TAG, str);
 		}
 	}
 }

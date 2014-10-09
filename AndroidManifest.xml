@@ -34,20 +34,16 @@
         </activity>
 
         <receiver
-            android:name="com.ford.onlinemusic.FordReceiver"
+            android:name="com.ford.onlinemusic.applink.AppLinkReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
-
-                <!-- action android:name="android.bluetooth.adapter.action.CONNECTION_STATE_CHANGED" /> -->
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
-                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="android.bluetooth.adapter.action.STATE_CHANGED" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <service android:name="com.ford.onlinemusic.FordService" />
+        <service android:name="com.ford.onlinemusic.applink.AppLinkService" />
         <service android:name="com.ford.onlinemusic.MusicPlayerService" />
     </application>
 

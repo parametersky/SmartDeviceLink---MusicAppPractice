@@ -39,9 +39,13 @@ public class SongList {
 	}
 
 	public void removeSong(int index) {
+		if( index <= CurrentSong){
+			CurrentSong--;
+		}
 		if (index < SongList.size()) {
 			SongList.remove(index);
 		}
+		
 	}
 
 	public int findSong(String name) {

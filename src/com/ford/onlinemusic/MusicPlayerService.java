@@ -66,7 +66,7 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 		@Override
 		public void onAudioFocusChange(int focusChange) {
 			// TODO Auto-generated method stub
-			Log.d(TAG, "onAudioFocus Change: " + focusChange);
+			Log.i(TAG, "onAudioFocus Change: " + focusChange);
 			switch (focusChange) {
 			case AudioManager.AUDIOFOCUS_GAIN:
 				start();
@@ -109,10 +109,10 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 			} else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
 				boolean status = intent.getBooleanExtra(
 						ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-				Log.d(TAG, "receive network status is " + status);
+				Log.i(TAG, "receive network status is " + status);
 				if (mNetStatus != !status) {
 					mNetStatus = !status;
-					Log.d(TAG, "network status is " + mNetStatus);
+					Log.i(TAG, "network status is " + mNetStatus);
 					// if (mNetStatus && mPlayingSong != null && mError) {
 					// mPlayer.start();
 					// }
