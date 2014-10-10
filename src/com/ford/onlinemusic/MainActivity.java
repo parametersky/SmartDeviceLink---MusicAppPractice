@@ -39,7 +39,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	private SongList localsongs = null;
 	private SongList mostpopularsongs = null;
 
-	private static String[] PLAYLISTS = { "±¾µØ¸èÇú", "Ëæ±ãÌıÌı", "ĞÇ±ê¸èÇú", "ÇáÒôÀÖ" };
+	private static String[] PLAYLISTS = { "æœ¬åœ°æ­Œæ›²", "éšä¾¿å¬å¬", "æ˜Ÿæ ‡æ­Œæ›²", "è½»éŸ³ä¹" };
 	private ListView listview = null;
 	private ImageView seekleft = null;
 	private ImageView seekright = null;
@@ -400,33 +400,32 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		buildLocalSongList();
 		mostpopularsongs = new SongList(getStringValue(R.string.mostpopular));
 		mostpopularsongs
-				.addSong(new SongData("Ğ¡Æ»¹û", "¿ê×ÓĞÖµÜ", "",
+				.addSong(new SongData("å°è‹¹æœ", "ç­·å­å…„å¼Ÿ", "",
 						"http://cc.stream.qqmusic.qq.com/C1000035GveV3i9dBM.m4a?fromtag=52"));
 		mostpopularsongs
-				.addSong(new SongData("½ğÓñÁ¼Ôµ", "Àîçù", "",
+				.addSong(new SongData("é‡‘ç‰è‰¯ç¼˜", "æç¦", "",
 						"http://cc.stream.qqmusic.qq.com/C100001iEkMd4CUugY.m4a?fromtag=52"));
 		mostpopularsongs
-				.addSong(new SongData("Í¬×ÀµÄÄã", "ºúÏÄ", "",
+				.addSong(new SongData("åŒæ¡Œçš„ä½ ", "èƒ¡å¤", "",
 						"http://cc.stream.qqmusic.qq.com/C1000031zaiZ2ZmBYj.m4a?fromtag=52"));
 		favoritesSonglist1 = new SongList(getStringValue(R.string.favorites));
 		newAgeSonglist2 = new SongList(getStringValue(R.string.newage));
 		favoritesSonglist1
-				.addSong(new SongData("Ù»Å®ÓÄ»ê", "ÕÅ¹úÈÙ", "",
+				.addSong(new SongData("å€©å¥³å¹½é­‚", "å¼ å›½è£", "",
 						"http://cc.stream.qqmusic.qq.com/C100001hZjYW0nOsTa.m4a?fromtag=52"));
 		favoritesSonglist1
-				.addSong(new SongData("µ±°®ÒÑ³ÉÍùÊÂ", "ÕÅ¹úÈÙ", "",
+				.addSong(new SongData("å½“çˆ±å·²æˆå¾€äº‹", "å¼ å›½è£", "",
 						"http://cc.stream.qqmusic.qq.com/C100001UK2LJ0KU9ay.m4a?fromtag=52"));
 		favoritesSonglist1
-				.addSong(new SongData("·ç¼ÌĞø´µ", "ÕÅ¹úÈÙ", "",
+				.addSong(new SongData("é£ç»§ç»­å¹", "å¼ å›½è£", "",
 						"http://cc.stream.qqmusic.qq.com/C100002TvOb41nQrdx.m4a?fromtag=52"));
 		newAgeSonglist2
-				.addSong(new SongData("¹ÊÏçµÄÔ­·ç¾°", "×Ú´ÎÀÉ", "ÇáÒôÀÖ",
+				.addSong(new SongData("æ•…ä¹¡çš„åŸé£æ™¯", "å®—æ¬¡éƒ", "è½»éŸ³ä¹",
 						"http://cc.stream.qqmusic.qq.com/C100003d4aYZ385awT.m4a?fromtag=52"));
 		newAgeSonglist2
-				.addSong(new SongData("Ìì¿ÕÖ®³Ç", "¾ÃÊ¯ÈÃ",
+				.addSong(new SongData("å¤©ç©ºä¹‹åŸ", "ä¹…çŸ³è®©",
 						getStringValue(R.string.playlists),
 						"http://cc.stream.qqmusic.qq.com/C100001hPlsk2RVbtF.m4a?fromtag=52"));
-
 		currentPlayingList = localsongs;
 	}
 

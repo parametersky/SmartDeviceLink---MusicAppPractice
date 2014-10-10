@@ -69,7 +69,8 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 			Log.i(TAG, "onAudioFocus Change: " + focusChange);
 			switch (focusChange) {
 			case AudioManager.AUDIOFOCUS_GAIN:
-				start();
+				if(!isPaused)
+					start();
 				break;
 			case AudioManager.AUDIOFOCUS_LOSS:
 			case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
