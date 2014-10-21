@@ -649,8 +649,8 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			}
 
 			mSyncProxy = new SyncProxyALM(this,
-			/* getStringValue(R.string.musicappdemo) */"SyncProxyTester", true,
-					language, language, "584421907");
+			getStringValue(R.string.musicappdemo) , true,
+					language, language, "1234325");
 			SyncProxyALM.enableDebugTool();
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
