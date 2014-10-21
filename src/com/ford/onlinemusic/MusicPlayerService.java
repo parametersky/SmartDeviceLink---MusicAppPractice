@@ -282,6 +282,7 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 		wifilock.release();
 		unregisterReceiver(mBR);
 		mAudioManager.abandonAudioFocus(mAudioFocusListener);
+		Log.i(TAG, "MusicPlayer Service onDestroy");
 	}
 
 	@Override

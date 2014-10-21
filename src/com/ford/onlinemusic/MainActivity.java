@@ -95,6 +95,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	};
 
 	private SelectionMode mode = SelectionMode.LIST_MODE;
+	
 	// lockscreen view
 	private static ImageView lockscreen;
 
@@ -160,6 +161,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		// stop applink service
 		stopAppLinkService();
 		unregisterReceiver(mBR);
+		unregisterReceiver(mBRS);
 	}
 
 	// handler to show/remove lockscreen

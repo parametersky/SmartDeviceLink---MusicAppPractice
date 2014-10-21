@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Vector;
 
+import org.json.JSONException;
+
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,10 +41,11 @@ import com.ford.syncV4.proxy.rpc.DeleteCommandResponse;
 import com.ford.syncV4.proxy.rpc.DeleteFileResponse;
 import com.ford.syncV4.proxy.rpc.DeleteInteractionChoiceSetResponse;
 import com.ford.syncV4.proxy.rpc.DeleteSubMenuResponse;
-import com.ford.syncV4.proxy.rpc.DialNumberResponse;
+import com.ford.syncV4.proxy.rpc.EncodedSyncPDataResponse;
 import com.ford.syncV4.proxy.rpc.EndAudioPassThruResponse;
 import com.ford.syncV4.proxy.rpc.GenericResponse;
 import com.ford.syncV4.proxy.rpc.GetDTCsResponse;
+import com.ford.syncV4.proxy.rpc.GetVehicleData;
 import com.ford.syncV4.proxy.rpc.GetVehicleDataResponse;
 import com.ford.syncV4.proxy.rpc.Image;
 import com.ford.syncV4.proxy.rpc.ListFilesResponse;
@@ -51,9 +54,12 @@ import com.ford.syncV4.proxy.rpc.OnButtonEvent;
 import com.ford.syncV4.proxy.rpc.OnButtonPress;
 import com.ford.syncV4.proxy.rpc.OnCommand;
 import com.ford.syncV4.proxy.rpc.OnDriverDistraction;
+import com.ford.syncV4.proxy.rpc.OnEncodedSyncPData;
 import com.ford.syncV4.proxy.rpc.OnHMIStatus;
 import com.ford.syncV4.proxy.rpc.OnLanguageChange;
 import com.ford.syncV4.proxy.rpc.OnPermissionsChange;
+import com.ford.syncV4.proxy.rpc.OnSyncPData;
+import com.ford.syncV4.proxy.rpc.OnTBTClientState;
 import com.ford.syncV4.proxy.rpc.OnVehicleData;
 import com.ford.syncV4.proxy.rpc.PerformAudioPassThruResponse;
 import com.ford.syncV4.proxy.rpc.PerformInteractionResponse;
@@ -71,6 +77,7 @@ import com.ford.syncV4.proxy.rpc.SoftButton;
 import com.ford.syncV4.proxy.rpc.SpeakResponse;
 import com.ford.syncV4.proxy.rpc.SubscribeButtonResponse;
 import com.ford.syncV4.proxy.rpc.SubscribeVehicleDataResponse;
+import com.ford.syncV4.proxy.rpc.SyncPDataResponse;
 import com.ford.syncV4.proxy.rpc.UnsubscribeButtonResponse;
 import com.ford.syncV4.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.ford.syncV4.proxy.rpc.enums.AudioStreamingState;
@@ -80,6 +87,7 @@ import com.ford.syncV4.proxy.rpc.enums.ImageType;
 import com.ford.syncV4.proxy.rpc.enums.InteractionMode;
 import com.ford.syncV4.proxy.rpc.enums.Language;
 import com.ford.syncV4.proxy.rpc.enums.SoftButtonType;
+import com.ford.syncV4.proxy.rpc.enums.SyncDisconnectedReason;
 import com.ford.syncV4.proxy.rpc.enums.SystemAction;
 import com.ford.syncV4.proxy.rpc.enums.TextAlignment;
 import com.ford.syncV4.proxy.rpc.enums.TriggerSource;
@@ -317,6 +325,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			mSyncProxy.subscribeButton(ButtonName.SEEKLEFT, correlationID++);
 			mSyncProxy.subscribeButton(ButtonName.SEEKRIGHT, correlationID++);
 			mSyncProxy.subscribeButton(ButtonName.OK, correlationID++);
+			mSyncProxy.subscribeButton(ButtonName.PRESET_0, correlationID++);
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -538,8 +547,8 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			mSyncProxy.setMediaClockTimer(null, null, null, UpdateMode.CLEAR,
 					correlationID++);
 			mSyncProxy.show(song.getName(), song.getArtist(), null, null, null,
-					null, getStringValue(R.string.bufferring), null, mCommonSoftbutton, null,
-					null, correlationID++);
+					null, getStringValue(R.string.bufferring), null,
+					mCommonSoftbutton, null, null, correlationID++);
 
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
@@ -640,9 +649,9 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			}
 
 			mSyncProxy = new SyncProxyALM(this,
-					getStringValue(R.string.musicappdemo), true, language,
-					language, "1234566799081");
-
+			/* getStringValue(R.string.musicappdemo) */"SyncProxyTester", true,
+					language, language, "584421907");
+			SyncProxyALM.enableDebugTool();
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
 			Log.i(TAG, e.getMessage());
@@ -666,6 +675,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			Log.e(TAG, "dispose mSyncProxy failed");
 			e.printStackTrace();
 		}
+		Log.i(TAG, "AppLink Service OnDestroy");
 		removeLockscreen();
 		stopMusicService();
 		unregisterReceiver(mBR);
@@ -690,11 +700,11 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	@Override
 	public void onOnHMIStatus(OnHMIStatus notification) {
 		// TODO Auto-generated method stub
-		
+
 		hmilevel = notification.getHmiLevel();
-		
+
 		AudioStreamingState state = notification.getAudioStreamingState();
-		
+
 		switch (state) {
 		case AUDIBLE:
 			if (!isPaused)
@@ -706,7 +716,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 		case ATTENUATED:
 			break;
 		}
-		
+
 		switch (hmilevel) {
 		case HMI_BACKGROUND:
 			Log.i(TAG, "HMI_BACKGOUND");
@@ -741,7 +751,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 		default:
 			break;
 		}
-		
+
 	}
 
 	public void showLockscreen() {
@@ -773,7 +783,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	 */
 	public void onProxyClosed(String info, Exception e) {
 		// TODO Auto-generated method stub
-		Log.i(TAG, "onProxyClosed");
+		Log.i(TAG, "onProxyClosed:" + e.getLocalizedMessage());
 		removeLockscreen();
 		stopMusicService();
 		SyncExceptionCause cause = ((SyncException) e).getSyncExceptionCause();
@@ -1087,9 +1097,32 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			} else {
 				pauseMediaPlayer();
 			}
+		} else if (name.equals(ButtonName.PRESET_0)) {
+			getVehicleData();
 		}
 		if (currentList != null)
 			currentList.setRandom(isRandom);
+	}
+
+	public void getVehicleData() {
+		GetVehicleData vehicledata = new GetVehicleData();
+		vehicledata.setOdometer(true);
+		vehicledata.setSpeed(true);
+		vehicledata.setGps(true);
+		vehicledata.setCorrelationID(correlationID++);
+		try {
+			Log.i(TAG, "vehicledata is "
+					+ vehicledata.serializeJSON().toString());
+		} catch (JSONException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			mSyncProxy.sendRPCRequest(vehicledata);
+		} catch (SyncException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -1133,7 +1166,27 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	@Override
 	public void onGetVehicleDataResponse(GetVehicleDataResponse response) {
 		// TODO Auto-generated method stub
+		Log.i(TAG, "reponse is " + response.getInfo());
+		try {
+			Log.i(TAG, "reponse string is "
+					+ response.serializeJSON().toString());
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (response.getSuccess()) {
+			Log.i(TAG,
+					"onGetVehileDataResponse Odometer is : "
+							+ response.getOdometer());
+			Log.i(TAG,
+					"onGetVehileDataREsponse Speed is : " + response.getSpeed());
+		}
 
+		double speed = response.getSpeed().doubleValue();
+		int odometer = response.getOdometer() != null ? response.getOdometer()
+				.intValue() : 0;
+		Log.i(TAG, "speed is " + speed);
+		Log.i(TAG, " odometer is " + odometer);
 	}
 
 	@Override
@@ -1229,12 +1282,37 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	}
 
 	@Override
-	public void onDialNumberResponse(DialNumberResponse arg0) {
+	public void onError(String arg0, Exception arg1) {
 		// TODO Auto-generated method stub
+
 	}
 
 	@Override
-	public void onError(String arg0, Exception arg1) {
+	public void onEncodedSyncPDataResponse(EncodedSyncPDataResponse arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onOnEncodedSyncPData(OnEncodedSyncPData arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onOnSyncPData(OnSyncPData arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onOnTBTClientState(OnTBTClientState arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onSyncPDataResponse(SyncPDataResponse arg0) {
 		// TODO Auto-generated method stub
 
 	}
