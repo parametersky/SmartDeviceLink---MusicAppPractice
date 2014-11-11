@@ -649,9 +649,9 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 			}
 
 			mSyncProxy = new SyncProxyALM(this,
-			/* getStringValue(R.string.musicappdemo) */"SyncProxyTester", true,
-					language, language, "584421907");
-			SyncProxyALM.enableDebugTool();
+					getStringValue(R.string.musicappdemo), true, language,
+					language, "12344325");
+
 		} catch (SyncException e) {
 			// TODO Auto-generated catch block
 			Log.i(TAG, e.getMessage());
@@ -1140,7 +1140,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	@Override
 	public void onOnPermissionsChange(OnPermissionsChange notification) {
 		// TODO Auto-generated method stub
-
+		Log.i(TAG, "onOnPermisstionChange");
 	}
 
 	@Override
@@ -1180,6 +1180,16 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 							+ response.getOdometer());
 			Log.i(TAG,
 					"onGetVehileDataREsponse Speed is : " + response.getSpeed());
+		} else if (response.getResultCode().name().equals("DISALLOWED")) {
+			Log.i(TAG, "onGetVehicleDataReponse get DISABLLOWED");
+			try {
+				mSyncProxy
+						.alert("GetVehicleData is Disallowed, please go to Application Settings and request Update",
+								true, correlationID++);
+			} catch (SyncException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		double speed = response.getSpeed().doubleValue();
@@ -1290,19 +1300,16 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	@Override
 	public void onEncodedSyncPDataResponse(EncodedSyncPDataResponse arg0) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void onOnEncodedSyncPData(OnEncodedSyncPData arg0) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void onOnSyncPData(OnSyncPData arg0) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
