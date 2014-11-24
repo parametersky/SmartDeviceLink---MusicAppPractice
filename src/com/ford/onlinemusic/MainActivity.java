@@ -159,7 +159,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		Log.i(TAG, "onDestroy ");
 
 		// stop applink service
-		stopAppLinkService();
+		resetAppLinkService();
 		unregisterReceiver(mBR);
 		unregisterReceiver(mBRS);
 	}
@@ -237,13 +237,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	}
 
 	/*
-	 * Called in onDestroy() to stop AppLink service when user exits the app or
+	 * Called in onDestroy() to reset AppLink service when user exits the app or
 	 * the app crashes
 	 */
-	public void stopAppLinkService() {
-		Intent intent = new Intent();
-		intent.setClass(this, AppLinkService.class);
-		stopService(intent);
+	public void resetAppLinkService() {
+		AppLinkService service = AppLinkService.getInstance();
+		if(service != null){
+			service.resetProxy();
+		}
 	}
 
 	public static boolean getAppIsRunning() {

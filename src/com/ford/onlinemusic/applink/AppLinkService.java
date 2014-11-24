@@ -118,7 +118,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	private static final int BTN_ID_UNFAVORITE = 1316;
 	private static final int CHS_ID_PLAYLISTS = 1041;
 	private static AppLinkService instance = null;
-	private SyncProxyALM mSyncProxy = null;
+	private static SyncProxyALM mSyncProxy = null;
 	private final String TAG = "AppLinkService";
 	private int correlationID = 1;
 	private HMILevel hmilevel = null;
@@ -150,7 +150,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	private boolean getFirstRun = false;
 
 	private String mPlayerStatus = null;
-
+	
 	private final Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			Log.i("Kyle", "lenght is " + msg.arg1);
@@ -621,7 +621,18 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 		StackTraceElement traceElement = ((new Exception()).getStackTrace())[1];
 		return traceElement.getMethodName() + "\n";
 	}
-
+	public void resetProxy(){
+		if(mSyncProxy == null){
+			startProxy();
+		} else {
+			try {
+				mSyncProxy.resetProxy();
+			} catch (SyncException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 	/*
 	 * called by onStartCommand() to create proxy, if proxy has been created
 	 * then do nothing, else create a new one.
@@ -798,7 +809,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 				}
 			}
 		} else {
-			stopSelf();
+//			stopSelf();
 		}
 	}
 
