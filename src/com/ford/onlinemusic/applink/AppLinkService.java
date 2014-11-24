@@ -41,7 +41,7 @@ import com.ford.syncV4.proxy.rpc.DeleteCommandResponse;
 import com.ford.syncV4.proxy.rpc.DeleteFileResponse;
 import com.ford.syncV4.proxy.rpc.DeleteInteractionChoiceSetResponse;
 import com.ford.syncV4.proxy.rpc.DeleteSubMenuResponse;
-import com.ford.syncV4.proxy.rpc.EncodedSyncPDataResponse;
+import com.ford.syncV4.proxy.rpc.DiagnosticMessageResponse;
 import com.ford.syncV4.proxy.rpc.EndAudioPassThruResponse;
 import com.ford.syncV4.proxy.rpc.GenericResponse;
 import com.ford.syncV4.proxy.rpc.GetDTCsResponse;
@@ -54,12 +54,15 @@ import com.ford.syncV4.proxy.rpc.OnButtonEvent;
 import com.ford.syncV4.proxy.rpc.OnButtonPress;
 import com.ford.syncV4.proxy.rpc.OnCommand;
 import com.ford.syncV4.proxy.rpc.OnDriverDistraction;
-import com.ford.syncV4.proxy.rpc.OnEncodedSyncPData;
 import com.ford.syncV4.proxy.rpc.OnHMIStatus;
+import com.ford.syncV4.proxy.rpc.OnHashChange;
+import com.ford.syncV4.proxy.rpc.OnKeyboardInput;
 import com.ford.syncV4.proxy.rpc.OnLanguageChange;
+import com.ford.syncV4.proxy.rpc.OnLockScreenStatus;
 import com.ford.syncV4.proxy.rpc.OnPermissionsChange;
-import com.ford.syncV4.proxy.rpc.OnSyncPData;
+import com.ford.syncV4.proxy.rpc.OnSystemRequest;
 import com.ford.syncV4.proxy.rpc.OnTBTClientState;
+import com.ford.syncV4.proxy.rpc.OnTouchEvent;
 import com.ford.syncV4.proxy.rpc.OnVehicleData;
 import com.ford.syncV4.proxy.rpc.PerformAudioPassThruResponse;
 import com.ford.syncV4.proxy.rpc.PerformInteractionResponse;
@@ -77,7 +80,7 @@ import com.ford.syncV4.proxy.rpc.SoftButton;
 import com.ford.syncV4.proxy.rpc.SpeakResponse;
 import com.ford.syncV4.proxy.rpc.SubscribeButtonResponse;
 import com.ford.syncV4.proxy.rpc.SubscribeVehicleDataResponse;
-import com.ford.syncV4.proxy.rpc.SyncPDataResponse;
+import com.ford.syncV4.proxy.rpc.SystemRequestResponse;
 import com.ford.syncV4.proxy.rpc.UnsubscribeButtonResponse;
 import com.ford.syncV4.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.ford.syncV4.proxy.rpc.enums.AudioStreamingState;
@@ -792,7 +795,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	 * .lang.String, java.lang.Exception) Called when proxy detects that
 	 * connection between SYNC and the Phone breaks
 	 */
-	public void onProxyClosed(String info, Exception e) {
+	public void onProxyClosed(String info, Exception e,SyncDisconnectedReason arg2) {
 		// TODO Auto-generated method stub
 		Log.i(TAG, "onProxyClosed:" + e.getLocalizedMessage());
 		removeLockscreen();
@@ -1308,20 +1311,6 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 
 	}
 
-	@Override
-	public void onEncodedSyncPDataResponse(EncodedSyncPDataResponse arg0) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void onOnEncodedSyncPData(OnEncodedSyncPData arg0) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void onOnSyncPData(OnSyncPData arg0) {
-		// TODO Auto-generated method stub
-	}
 
 	@Override
 	public void onOnTBTClientState(OnTBTClientState arg0) {
@@ -1330,9 +1319,45 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 	}
 
 	@Override
-	public void onSyncPDataResponse(SyncPDataResponse arg0) {
+	public void onDiagnosticMessageResponse(DiagnosticMessageResponse arg0) {
 		// TODO Auto-generated method stub
+		
+	}
 
+	@Override
+	public void onOnHashChange(OnHashChange arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOnKeyboardInput(OnKeyboardInput arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOnLockScreenNotification(OnLockScreenStatus arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOnSystemRequest(OnSystemRequest arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onOnTouchEvent(OnTouchEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSystemRequestResponse(SystemRequestResponse arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
