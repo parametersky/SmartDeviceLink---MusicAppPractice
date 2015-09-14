@@ -228,12 +228,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	 * restarted while the phone is already connected to SYNC.
 	 */
 	public void startAppLinkService() {
-		BluetoothAdapter mBtAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (mBtAdapter != null && mBtAdapter.isEnabled()) {
+//		BluetoothAdapter mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+//		if (mBtAdapter != null && mBtAdapter.isEnabled()) {
 			Intent intent = new Intent();
 			intent.setClass(this, AppLinkService.class);
 			startService(intent);
-		}
+//		}
 	}
 
 	/*

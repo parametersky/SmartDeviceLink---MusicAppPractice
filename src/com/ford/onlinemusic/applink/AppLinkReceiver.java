@@ -56,16 +56,16 @@ public class AppLinkReceiver extends BroadcastReceiver {
 			 * bluetooth is connected rather than user press Find Mobile
 			 * Application.
 			 */
-			case BluetoothAdapter.STATE_TURNING_ON:
-				Log.i(TAG, "received action Turning_on");
-				Log.i(TAG, "connected with sync");
-				if (AppLinkService.getInstance() == null) {
-					Log.i(TAG, "send intent to start AppLinkService");
-					Intent serviceIntent = new Intent(context,
-							AppLinkService.class);
-					context.startService(serviceIntent);
-				}
-				break;
+//			case BluetoothAdapter.STATE_TURNING_ON:
+//				Log.i(TAG, "received action Turning_on");
+//				Log.i(TAG, "connected with sync");
+//				if (AppLinkService.getInstance() == null) {
+//					Log.i(TAG, "send intent to start AppLinkService");
+//					Intent serviceIntent = new Intent(context,
+//							AppLinkService.class);
+//					context.startService(serviceIntent);
+//				}
+//				break;
 			default:
 				break;
 			}
