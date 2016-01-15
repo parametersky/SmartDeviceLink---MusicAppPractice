@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SmartDeviceLinkLibrary-4.0.0-Android">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/SmartDeviceLinkLibrary-4.0.0-Android.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

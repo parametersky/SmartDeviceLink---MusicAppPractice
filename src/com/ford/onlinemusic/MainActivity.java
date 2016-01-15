@@ -2,10 +2,7 @@ package com.ford.onlinemusic;
 
 
 
-import com.ford.onlinemusic.applink.AppLinkService;
-
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +24,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.ford.onlinemusic.applink.AppLinkService;
 
 /*
  * This is the main activity just for demo, in a real app this activity handles the UI
@@ -123,7 +122,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		// start applink service if needed
 		startAppLinkService();
 		lockscreen = (ImageView) findViewById(R.id.lockscreen);
-
+//		AssetManager am = getResources().getAssets();
+//
+//		try {
+//			lockscreen.setImageBitmap(BitmapFactory.decodeStream(am.open("cover_11.jpeg")));
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		// register broadcast receiver for lockscreen broadcast
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction("com.kyle.lockscreen");
@@ -131,6 +137,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 		// if MainActivity is started by AppLinkService, get the lockscreen status
 		showLockscreen = getIntent().getBooleanExtra("LOCKSCREEN", false);
+
+//        PackageManager mpackage = getPackageManager();
+
+//        Log.d("Kyle-PName",mpackage.getInstallerPackageName("com.google.android.play.games")+"");
+//        Log.d("Kyle-PName", mpackage.getInstallerPackageName("com.qq.qcloud")+"");
+
 
 	}
 
@@ -150,6 +162,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 	public void onPause() {
 		super.onPause();
+
 		Log.i(TAG, "onPause ");
 		isAppRunning = false;
 	}
@@ -393,7 +406,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 			do {
 				localsongs
 						.addSong(new SongData(cursor.getString(1), cursor
-								.getString(2), cursor.getString(3), cursor
+								.getString(2), cursor.getString(3), null,cursor
 								.getString(4)));
 			} while (cursor.moveToNext());
 		}
@@ -402,32 +415,33 @@ public class MainActivity extends Activity implements View.OnClickListener {
 	public void buildSongList() {
 		buildLocalSongList();
 		mostpopularsongs = new SongList(getStringValue(R.string.mostpopular));
+		mostpopularsongs = new SongList(getStringValue(R.string.mostpopular));
 		mostpopularsongs
-				.addSong(new SongData("小苹果", "筷子兄弟", "",
+				.addSong(new SongData("小苹果", "筷子兄弟", "", "cover_11.jpg",
 						"http://cc.stream.qqmusic.qq.com/C1000035GveV3i9dBM.m4a?fromtag=52"));
 		mostpopularsongs
-				.addSong(new SongData("金玉良缘", "李琦", "",
+				.addSong(new SongData("金玉良缘", "李琦", "", "cover_22.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100001iEkMd4CUugY.m4a?fromtag=52"));
 		mostpopularsongs
-				.addSong(new SongData("同桌的你", "胡夏", "",
+				.addSong(new SongData("同桌的你", "胡夏", "", "cover_33.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C1000031zaiZ2ZmBYj.m4a?fromtag=52"));
 		favoritesSonglist1 = new SongList(getStringValue(R.string.favorites));
 		newAgeSonglist2 = new SongList(getStringValue(R.string.newage));
 		favoritesSonglist1
-				.addSong(new SongData("倩女幽魂", "张国荣", "",
+				.addSong(new SongData("倩女幽魂", "张国荣", "", "cover_4412356.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100001hZjYW0nOsTa.m4a?fromtag=52"));
 		favoritesSonglist1
-				.addSong(new SongData("当爱已成往事", "张国荣", "",
+				.addSong(new SongData("当爱已成往事", "张国荣", "", "cover_55.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100001UK2LJ0KU9ay.m4a?fromtag=52"));
 		favoritesSonglist1
-				.addSong(new SongData("风继续吹", "张国荣", "",
+				.addSong(new SongData("风继续吹", "张国荣", "", "cover_66.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100002TvOb41nQrdx.m4a?fromtag=52"));
 		newAgeSonglist2
-				.addSong(new SongData("故乡的原风景", "宗次郎", "轻音乐",
+				.addSong(new SongData("故乡的原风景", "宗次郎", "轻音乐", "cover_77.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100003d4aYZ385awT.m4a?fromtag=52"));
 		newAgeSonglist2
 				.addSong(new SongData("天空之城", "久石让",
-						getStringValue(R.string.playlists),
+						getStringValue(R.string.playlists), "cover_88.jpeg",
 						"http://cc.stream.qqmusic.qq.com/C100001hPlsk2RVbtF.m4a?fromtag=52"));
 		currentPlayingList = localsongs;
 	}

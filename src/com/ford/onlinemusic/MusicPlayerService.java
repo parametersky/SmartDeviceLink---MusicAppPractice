@@ -1,11 +1,6 @@
 package com.ford.onlinemusic;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -20,12 +15,14 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 /*
  * Music Player Service: 
@@ -46,8 +43,9 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 	public final static String DATA_ARTIST = "song_artist";
 	public final static String DATA_INDEX = "song_index";
 	public final static String DATA_STATUS = "song_status";
-	public final static String DATA_LENGTH = "song_length";
-
+	public final static String DATA_POSITION = "song_length";
+	public final static String DATA_LENGTH = "song_total_length";
+	
 	public final static String ACTION_COMMAND = "com.kyle.onlinemusic.CMD";
 	public final static String COMMAND = "command";
 	public final static int CMD_START = 110;
@@ -264,8 +262,10 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 		intent.putExtra(DATA_INDEX, (mCurrentPlayList.CurrentSong + 1) + "/"
 				+ mCurrentPlayList.size());
 		intent.putExtra(DATA_STATUS, status);
-		if (mInitailized)
-			intent.putExtra(DATA_LENGTH, (mPlayer.getCurrentPosition() / 1000));
+		if (mInitailized){
+			intent.putExtra(DATA_POSITION, (mPlayer.getCurrentPosition() / 1000));
+			intent.putExtra(DATA_LENGTH, (mPlayer.getDuration() / 1000));
+		}
 		this.sendBroadcast(intent);
 	}
 
@@ -316,9 +316,9 @@ public class MusicPlayerService extends Service implements OnErrorListener,
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		// TODO Auto-generated method stub
-		updateDisplay(mCurrentPlayList.getCurrSong(), "Playing");
 		mp.start();
 		mInitailized = true;
+		updateDisplay(mCurrentPlayList.getCurrSong(), "Playing");
 	}
 
 }
