@@ -23,31 +23,39 @@ import com.ford.onlinemusic.R;
 import com.ford.onlinemusic.SongData;
 import com.ford.onlinemusic.SongList;
 import com.smartdevicelink.exception.SdlException;
+import com.smartdevicelink.exception.SdlExceptionCause;
 import com.smartdevicelink.proxy.SdlProxyALM;
 import com.smartdevicelink.proxy.TTSChunkFactory;
 import com.smartdevicelink.proxy.callbacks.OnServiceEnded;
 import com.smartdevicelink.proxy.callbacks.OnServiceNACKed;
 import com.smartdevicelink.proxy.interfaces.IProxyListenerALM;
+import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.AddCommandResponse;
 import com.smartdevicelink.proxy.rpc.AddSubMenuResponse;
 import com.smartdevicelink.proxy.rpc.AlertManeuverResponse;
 import com.smartdevicelink.proxy.rpc.AlertResponse;
 import com.smartdevicelink.proxy.rpc.ChangeRegistrationResponse;
 import com.smartdevicelink.proxy.rpc.Choice;
+import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteCommandResponse;
 import com.smartdevicelink.proxy.rpc.DeleteFileResponse;
 import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteSubMenuResponse;
 import com.smartdevicelink.proxy.rpc.DiagnosticMessageResponse;
+import com.smartdevicelink.proxy.rpc.DialNumber;
 import com.smartdevicelink.proxy.rpc.DialNumberResponse;
 import com.smartdevicelink.proxy.rpc.EndAudioPassThruResponse;
+import com.smartdevicelink.proxy.rpc.GPSData;
 import com.smartdevicelink.proxy.rpc.GenericResponse;
 import com.smartdevicelink.proxy.rpc.GetDTCsResponse;
 import com.smartdevicelink.proxy.rpc.GetVehicleData;
 import com.smartdevicelink.proxy.rpc.GetVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.HMICapabilities;
 import com.smartdevicelink.proxy.rpc.Image;
+import com.smartdevicelink.proxy.rpc.KeyboardProperties;
 import com.smartdevicelink.proxy.rpc.ListFilesResponse;
+import com.smartdevicelink.proxy.rpc.MenuParams;
 import com.smartdevicelink.proxy.rpc.OnAudioPassThru;
 import com.smartdevicelink.proxy.rpc.OnButtonEvent;
 import com.smartdevicelink.proxy.rpc.OnButtonPress;
@@ -64,12 +72,15 @@ import com.smartdevicelink.proxy.rpc.OnSystemRequest;
 import com.smartdevicelink.proxy.rpc.OnTBTClientState;
 import com.smartdevicelink.proxy.rpc.OnTouchEvent;
 import com.smartdevicelink.proxy.rpc.OnVehicleData;
+import com.smartdevicelink.proxy.rpc.PerformAudioPassThru;
 import com.smartdevicelink.proxy.rpc.PerformAudioPassThruResponse;
+import com.smartdevicelink.proxy.rpc.PerformInteraction;
 import com.smartdevicelink.proxy.rpc.PerformInteractionResponse;
 import com.smartdevicelink.proxy.rpc.PutFile;
 import com.smartdevicelink.proxy.rpc.PutFileResponse;
 import com.smartdevicelink.proxy.rpc.ReadDIDResponse;
 import com.smartdevicelink.proxy.rpc.ResetGlobalPropertiesResponse;
+import com.smartdevicelink.proxy.rpc.ScrollableMessage;
 import com.smartdevicelink.proxy.rpc.ScrollableMessageResponse;
 import com.smartdevicelink.proxy.rpc.SendLocation;
 import com.smartdevicelink.proxy.rpc.SendLocationResponse;
@@ -87,6 +98,7 @@ import com.smartdevicelink.proxy.rpc.SpeakResponse;
 import com.smartdevicelink.proxy.rpc.StartTime;
 import com.smartdevicelink.proxy.rpc.StreamRPCResponse;
 import com.smartdevicelink.proxy.rpc.SubscribeButtonResponse;
+import com.smartdevicelink.proxy.rpc.SubscribeVehicleData;
 import com.smartdevicelink.proxy.rpc.SubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.SystemRequestResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
@@ -94,13 +106,17 @@ import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
 import com.smartdevicelink.proxy.rpc.VrHelpItem;
 import com.smartdevicelink.proxy.rpc.enums.AudioStreamingState;
+import com.smartdevicelink.proxy.rpc.enums.AudioType;
+import com.smartdevicelink.proxy.rpc.enums.BitsPerSample;
 import com.smartdevicelink.proxy.rpc.enums.ButtonName;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.ImageType;
 import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
+import com.smartdevicelink.proxy.rpc.enums.KeypressMode;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 import com.smartdevicelink.proxy.rpc.enums.LayoutMode;
+import com.smartdevicelink.proxy.rpc.enums.SamplingRate;
 import com.smartdevicelink.proxy.rpc.enums.SdlDisconnectedReason;
 import com.smartdevicelink.proxy.rpc.enums.SoftButtonType;
 import com.smartdevicelink.proxy.rpc.enums.SystemAction;
@@ -114,6 +130,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -261,11 +278,15 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                 SetMediaClockTimer mTimer = new SetMediaClockTimer();
                 mTimer.setCorrelationID(correlationID++);
                 mTimer.setUpdateMode(UpdateMode.PAUSE);
-                mSdlProxy.sendRPCRequest(mTimer);
+                if (hmilevel == HMILevel.HMI_FULL)
+                    mSdlProxy.sendRPCRequest(mTimer);
                 mSdlProxy.show(null, null, null, null, null, null,
                         getStringValue(R.string.paused), null,
                         mCommonSoftbutton, null, null, correlationID++);
-
+                Log.i(TAG, "SetMediaclockTimer  PAUSE");
+//                isPaused = true;
+//                mSdlProxy.alert("Paused","paused",null
+//                ,true,5000,correlationID++);
             } else if (status.equalsIgnoreCase("network_error")) {
                 mSdlProxy.show(null, null, null, null, null, null,
                         getStringValue(R.string.networkerror), null, null,
@@ -296,8 +317,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                 mSdlProxy.show(name, artist, null, null, null, null,
                         currentList.ListName, null, mCommonSoftbutton, null,
                         TextAlignment.CENTERED, correlationID++);
-
-                isPaused = false;
+                Log.i(TAG, "SetmediaClockTimer: COUNTUP");
             }
         } catch (SdlException e) {
             e.printStackTrace();
@@ -339,7 +359,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         newAgeSonglist2 = new SongList(getStringValue(R.string.newage));
         favoritesSonglist1
                 .addSong(new SongData("倩女幽魂", "张国荣", "", "cover_4412365.jpeg",
-                        "http://cc.stream.qqmusic.qq.com/C100001hZjYW0nOsTa.m4a?fromtag=52"));
+                        "http://ice.somafm.com/spacestation"/*http://cc.stream.qqmusic.qq.com/C100001hZjYW0nOsTa.m4a?fromtag=52"*/));
         favoritesSonglist1
                 .addSong(new SongData("当爱已成往事", "张国荣", "", "cover_55.jpeg",
                         "http://cc.stream.qqmusic.qq.com/C100001UK2LJ0KU9ay.m4a?fromtag=52"));
@@ -368,7 +388,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         choice1.setChoiceID(1031);
         choice1.setMenuName(favoritesSonglist1.ListName);
         choice1.setVrCommands(new Vector<String>(Arrays
-                .asList(new String[]{favoritesSonglist1.ListName})));
+                .asList(new String[]{"星标歌单"})));
         Image image = new Image();
         image.setImageType(ImageType.STATIC);
         image.setValue("0x11");
@@ -380,7 +400,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         choice2.setChoiceID(1032);
         choice2.setMenuName(newAgeSonglist2.ListName);
         choice2.setVrCommands(new Vector<String>(Arrays
-                .asList(new String[]{newAgeSonglist2.ListName})));
+                .asList(new String[]{"轻音乐"})));
         mQQMusicChoiceSet.add(choice2);
 
     }
@@ -393,6 +413,11 @@ public class AppLinkService extends Service implements IProxyListenerALM {
             mSdlProxy.subscribeButton(ButtonName.PRESET_1, correlationID++);
             mSdlProxy.subscribeButton(ButtonName.PRESET_2, correlationID++);
             mSdlProxy.subscribeButton(ButtonName.PRESET_3, correlationID++);
+            mSdlProxy.subscribeButton(ButtonName.PRESET_4, correlationID++);
+            mSdlProxy.subscribeButton(ButtonName.PRESET_5, correlationID++);
+            mSdlProxy.subscribeButton(ButtonName.PRESET_6, correlationID++);
+            mSdlProxy.subscribeButton(ButtonName.PRESET_7, correlationID++);
+            mSdlProxy.subscribeButton(ButtonName.PRESET_8, correlationID++);
 
         } catch (SdlException e) {
             // TODO Auto-generated catch onblock
@@ -456,6 +481,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     public void pump(String content, String text2) {
         try {
             mSdlProxy.alert(content, text2, false, 3000, correlationID++);
+//            mSdlProxy.resumeMediaClockTimer();
         } catch (SdlException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -490,9 +516,18 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 
     public void performInteraction(int choicesetid, String initprompt,
                                    String displaytext, InteractionMode mode) {
+//            mSdlProxy.performInteraction(initprompt, displaytext, choicesetid,
+//                    null, null, mode, 10000, correlationID++);
         try {
-            mSdlProxy.performInteraction(initprompt, displaytext, choicesetid,
-                    null, null, mode, 10000, correlationID++);
+            PerformInteraction pi = new PerformInteraction();
+            pi.setInitialPrompt(TTSChunkFactory.createSimpleTTSChunks("init prompt"));
+            pi.setInitialText("Init Text");
+            pi.setInteractionChoiceSetIDList(Arrays.asList(new Integer[]{CHS_ID_PLAYLISTS}));
+            pi.setInteractionLayout(LayoutMode.ICON_ONLY);
+            pi.setInteractionMode(InteractionMode.BOTH);
+            pi.setTimeout(100000);
+            pi.setCorrelationID(correlationID++);
+            mSdlProxy.sendRPCRequest(pi);
         } catch (SdlException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -518,7 +553,19 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                             getStringValue(R.string.mostpopular), "最流行的"})),
                     "0x11", ImageType.STATIC, correlationID++);
             // AddCommand addcommand = new AddCommand();
-            // addcommand.setCmdIcon(cmdIcon)
+            // addcond.setCmdIcon(cmdIcon)
+
+            mSdlProxy.addCommand(
+                    CMD_ID_MOSTPOPULAR,
+                    getStringValue(R.string.mostpopular),
+                    0,
+                    new Vector<String>(Arrays.asList(new String[]{
+                            getStringValue(R.string.mostpopular), "最流行的"})),
+                    "0x11", ImageType.STATIC, correlationID++);
+
+            mSdlProxy.addCommand(CMD_ID_FAVORITES,new Vector<String>(Arrays.asList(new String[]{
+                    getStringValue(R.string.mostpopular), "最流行的"})),correlationID++);
+
             mSdlProxy.addCommand(
                     CMD_ID_FAVORITES,
                     getStringValue(R.string.favorites),
@@ -537,8 +584,8 @@ public class AppLinkService extends Service implements IProxyListenerALM {
             mSdlProxy.createInteractionChoiceSet(mQQMusicChoiceSet,
                     CHS_ID_PLAYLISTS, correlationID++);
 
-            albumelist.sendCreateInteractionChoiceSet(mSdlProxy, 13149);
-            novellist.sendCreateInteractionChoiceSet(mSdlProxy,12345);
+//            albumelist.sendCreateInteractionChoiceSet(mSdlProxy, 13149);
+//            novellist.sendCreateInteractionChoiceSet(mSdlProxy, 12345);
             mSdlProxy.addCommand(
                     CMD_ID_ADDFAVORITE,
                     getStringValue(R.string.addfavorite),
@@ -587,6 +634,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     }
 
     public void startPlayList(SongList list) {
+        Log.i(TAG, "startPlayList: start");
         if (currentList == list) {
             return;
         }
@@ -594,6 +642,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         MusicPlayerService.setPlayList(list);
         startMediaPlayer();
         updateScreenSongInfo(currentList.getSong(currentList.CurrentSong));
+        Log.i(TAG, "startPlayList: finish");
 
     }
 
@@ -619,22 +668,22 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         // default set the song is not in the favorite list.
         Log.i("Kyle", "update Screen Song Info: " + song.getName() + "	"
                 + song.getAlbumPath());
-        if(!isGen3) {
+        if (!isGen3) {
             mCommonSoftbutton.remove(0);
             mCommonSoftbutton.add(0, pausebutton1);
         }
         if (favoritesSonglist1.findSong(song.getName()) != -1) {
-            if(mCommonSoftbutton.contains(favoritebutton)) {
+            if (mCommonSoftbutton.contains(favoritebutton)) {
                 mCommonSoftbutton.remove(favoritebutton);
             }
-            if(!mCommonSoftbutton.contains(unfavoritebutton)) {
+            if (!mCommonSoftbutton.contains(unfavoritebutton)) {
                 mCommonSoftbutton.add(unfavoritebutton);
             }
         } else {
-            if(mCommonSoftbutton.contains(unfavoritebutton)) {
+            if (mCommonSoftbutton.contains(unfavoritebutton)) {
                 mCommonSoftbutton.remove(unfavoritebutton);
             }
-            if(!mCommonSoftbutton.contains(favoritebutton)){
+            if (!mCommonSoftbutton.contains(favoritebutton)) {
                 mCommonSoftbutton.add(favoritebutton);
             }
         }
@@ -644,6 +693,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         try {
             mSdlProxy.setMediaClockTimer(null, null, null, UpdateMode.CLEAR,
                     correlationID++);
+            Log.i(TAG, "SetMediaclockTimer  CLEAR");
             mSdlProxy.show(song.getName(), song.getArtist(), null, null, null,
                     null, getStringValue(R.string.bufferring), null,
                     mCommonSoftbutton, null, null, correlationID++);
@@ -672,8 +722,9 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     }
 
     public void startMediaPlayer() {
+        Log.i(TAG, "startMediaPlayer() called with: " + "");
         sendCommand(MusicPlayerService.CMD_START);
-        // isPaused = false;
+        isPaused = false;
     }
 
     public void pauseMediaPlayer() {
@@ -719,7 +770,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     public int onStartCommand(Intent intent, int flag, int startId) {
         Log.i(TAG, "onStartCommand");
         startProxy();
-        return 0;
+        return Service.START_STICKY_COMPATIBILITY;
     }
 
     public static String _FUNC_() {
@@ -746,6 +797,17 @@ public class AppLinkService extends Service implements IProxyListenerALM {
      */
     public void startProxy() {
 
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                Log.i(TAG, "run: I'm alive");
+//                try {
+//                    sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }.start();
         // check whether current proxy is available, we should avoid to override
         // current proxy. because that will cause Sdl_UNAVAILABLE exception
         if (mSdlProxy != null && mSdlProxy.getIsConnected()) {
@@ -766,25 +828,29 @@ public class AppLinkService extends Service implements IProxyListenerALM {
             Locale locale = Locale.getDefault();
             String lang = locale.getDisplayLanguage();
             Log.i(TAG, "language is " + lang);
-            if (lang.contains("中文")) {
-                language = Language.ZH_CN;
-            } else {
-                language = Language.EN_US;
-            }
-
+//            if (lang.contains("中文")) {
+//                language = Language.ZH_CN;
+//            } else {
+            language = Language.EN_US;
+//            }
+//            TCPTransportConfig config = new TCPTransportConfig(12345,"192.168.0.1",false);
+//            USBTransportConfig config = new USBTransportConfig(this);
+//            mSdlProxy = new SdlProxyALM(this,"name",true,Language.EN_US,Language.EN_US,"112121",config);
             mSdlProxy = new SdlProxyALM(this,
-                    "SyncProxyTester", true, language,
-                    language, "584421907");
+                    /*"AppLink Demo"*/"SyncProxyTester1123", true, language,
+                    language, "584421907112");
+//            mSdlProxy = new SdlProxyALM()
 //	      mSdlProxy = new SdlProxyALM()
 
         } catch (SdlException e) {
             // TODO Auto-generated catch block
             Log.i(TAG, e.getMessage());
-
+//commented to debug
             if (mSdlProxy == null)
                 stopSelf();
             e.printStackTrace();
         }
+
     }
 
     public void onDestroy() {
@@ -878,9 +944,30 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         AudioStreamingState state = notification.getAudioStreamingState();
         Log.i(TAG, "get ononHmiStatus" + state);
         if (firstHMINone) {
+//            try {
+//                Log.i(TAG, "onOnHMIStatus: send setmediaclock pause in first hmi notification");
+//                SetMediaClockTimer mTimer = new SetMediaClockTimer();
+//                mTimer.setCorrelationID(correlationID++);
+//                mTimer.setUpdateMode(UpdateMode.PAUSE);
+//                mSdlProxy.sendRPCRequest(mTimer);
+//                Log.i(TAG, "SendmediaClockTimer: PAUSE");
+//            } catch (SdlException exception) {
+//
+//            }
+//            sendCommand(MusicPlayerService.CMD_PAUSE);
+
+
             Log.i(TAG, "send icon to sdl");
             try {
+
                 mSdlProxy.listfiles(correlationID++);
+
+                boolean isNavAvailable = false;
+                HMICapabilities hmicapabilites = mSdlProxy.getHmiCapabilities();
+                if (hmicapabilites != null) {
+                    isNavAvailable = hmicapabilites.isNavigationAvailable();
+                }
+                Log.i(TAG, "onOnHMIStatus: isNavigationAvailable " + isNavAvailable);
             } catch (SdlException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -889,46 +976,35 @@ public class AppLinkService extends Service implements IProxyListenerALM {
             firstHMINone = false;
             try {
                 isGen3 = mSdlProxy.getDisplayCapabilities().getGraphicSupported();
-                Log.i(TAG,"isGen3 "+isGen3);
+                Log.i(TAG, "isGen3 " + isGen3);
             } catch (SdlException e) {
                 e.printStackTrace();
             }
-            ArrayList<String> list = new ArrayList<String>();
-            for (int i = 0; i < 150; i++) {
-                list.add("小说 " + i);
-            }
-
-            albumelist = new SdlList(list,ALBUM_CHOICE_ID,ALBUM_CHOICESET_ID);
-            albumelist.setLayoutMode(LayoutMode.ICON_ONLY);
-            albumelist.downloadAndSendImageToSync(mSdlProxy, getAssets(), 1122);
-
-            albumelist.setOnItemSelectedListener(new SdlList.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(int choice_id) {
-                    novellist.showList(mSdlProxy,"请选择章节","请选择章节",correlationID++);
-                }
-            });
-            ArrayList<String> list1 = new ArrayList<String>();
-            for (int i = 0; i < 100; i++) {
-                list1.add("章节 " + i);
-            }
-
-            novellist = new SdlList(list1,NOVEL_CHOICE_ID,NOVEL_CHOICESET_ID);
 
         }
+        Log.i(TAG, "onOnHMIStatus: " + MusicPlayerService.isPlaying() + "  isPaused:" + isPaused);
         switch (state) {
             case AUDIBLE:
-                if (!isPaused)
+                Log.i(TAG, "onOnHMIStatus: AUDIBLE: " + MusicPlayerService.isPlaying() + "  isPaused:" + isPaused);
+                if (!isPaused && !MusicPlayerService.isPlaying()) {
                     startMediaPlayer();
+                }
                 break;
             case NOT_AUDIBLE:
-                try {
-                    SetMediaClockTimer mTimer = new SetMediaClockTimer();
-                    mTimer.setCorrelationID(correlationID++);
-                    mTimer.setUpdateMode(UpdateMode.PAUSE);
-                    mSdlProxy.sendRPCRequest(mTimer);
-                } catch (SdlException exception) {
+                Log.i(TAG, "onOnHMIStatus: NOT_AUDIBLE: " + MusicPlayerService.isPlaying() + "  isPaused:" + isPaused);
+                if (!isPaused && MusicPlayerService.isPlaying()) {
+                    try {
+                        SetMediaClockTimer mTimer = new SetMediaClockTimer();
+                        mTimer.setCorrelationID(correlationID++);
+                        mTimer.setUpdateMode(UpdateMode.PAUSE);
+                        if (hmilevel == HMILevel.HMI_FULL) {
+                            mSdlProxy.sendRPCRequest(mTimer);
+                            Log.i(TAG, "SetMediaclockTimer PAUSE");
+                        }
+                    } catch (SdlException exception) {
 
+                    }
+                    sendCommand(MusicPlayerService.CMD_PAUSE);
                 }
                 break;
             case ATTENUATED:
@@ -944,24 +1020,64 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                 // when HMI_FULL arrives, see if the lockscreen is showed.
                 // when the app is exited and the user enter the app again, first
                 // run is false,so we should make sure the lockscreen is on.
-                showLockscreen();
+
+//                showLockscreen();
                 if (notification.getFirstRun()) {
+
+
                     // when first run comes, start the activity and register
                     // commands, subscribe buttons, create choicesets(which will not
                     // change through the
                     // entire life cycle).
+//                    try {
+//                        mSdlProxy.setdisplaylayout("TILES_ONLY",correlationID++);
+//                    } catch (SdlException e) {
+//                        e.printStackTrace();
+//                    }
+
                     startMainActivity();
                     sendTrackData();
+                    SubscribeVehicleData sud = new SubscribeVehicleData();
+                    sud.setSpeed(true);
+                    sud.setGps(true);
+                    sud.setCorrelationID(correlationID++);
+                    try {
+                        mSdlProxy.sendRPCRequest(sud);
+                    } catch (SdlException e) {
+                        e.printStackTrace();
+                    }
+                    if (currentList == null) {
+                        Log.i(TAG, "onOnHMIStatus: currentlist == null");
+                    } else {
+                        Log.i(TAG, "onOnHMIStatus: set currentlist success");
+                        updateScreenSongInfo(currentList.getCurrSong());
+                    }
                     getFirstRun = true;
                     Vector<VrHelpItem> items = new Vector<VrHelpItem>();
                     int count = COMMANDS.length;
                     for (int j = 0; j < count; j++) {
                         VrHelpItem item = new VrHelpItem();
-                        item.setPosition(j);
+                        item.setPosition(j + 1);
                         item.setText(getString(COMMANDS[j]));
                         item.setImage(null);
                         Log.i(TAG, "add command help item:" + item.getText());
                         items.add(item);
+                    }
+
+                    SetGlobalProperties sgp = new SetGlobalProperties();
+                    sgp.setVrHelp(items);//TTSChunkFactory.createSimpleTTSChunks()
+                    sgp.setHelpPrompt(TTSChunkFactory.createPrerecordedTTSChunks("我来帮你"));
+                    sgp.setTimeoutPrompt(TTSChunkFactory.createPrerecordedTTSChunks("没有时间了"));
+                    sgp.setVrHelpTitle("让哥来帮你");
+                    KeyboardProperties kp = new KeyboardProperties();
+                    kp.setLanguage(Language.ZH_CN);
+                    kp.setKeypressMode(KeypressMode.SINGLE_KEYPRESS);
+                    sgp.setKeyboardProperties(kp);
+                    sgp.setCorrelationID(correlationID++);
+                    try {
+                        mSdlProxy.sendRPCRequest(sgp);
+                    } catch (SdlException e) {
+                        e.printStackTrace();
                     }
 
                     try {
@@ -972,16 +1088,38 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                                         TTSChunkFactory
                                                 .createSimpleTTSChunks("没时间了, 有话快说"),
                                         "让哥来帮你", items, correlationID++);
-                        SetGlobalProperties properties = new SetGlobalProperties();
+
 
                     } catch (SdlException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                } else {
-                    if (!isPaused) {
-                        startMediaPlayer();
+                    CreateInteractionChoiceSet cics = new CreateInteractionChoiceSet();
+                    List<Choice> vc = new ArrayList<Choice>();
+                    Choice choice = new Choice();
+                    choice.setChoiceID(10112);
+                    choice.setMenuName("【待支付】美女车主 今天（周三）15:55 出发");
+                    choice.setVrCommands(Arrays.asList(new String[]{"第一项"}));
+                    vc.add(choice);
+
+                    Choice choice2 = new Choice();
+                    choice2.setChoiceID(10122);
+                    choice2.setMenuName("【待支付】美女车主2 今天（周三）15:55 出发");
+                    choice2.setVrCommands(Arrays.asList(new String[]{"第二项"}));
+
+                    vc.add(choice2);
+
+                    cics.setCorrelationID(correlationID++);
+                    cics.setChoiceSet(vc);
+                    cics.setInteractionChoiceSetID(20112);
+
+                    try {
+                        mSdlProxy.sendRPCRequest(cics);
+                    } catch (SdlException e) {
+                        e.printStackTrace();
                     }
+
+                } else {
                 }
                 break;
             case HMI_NONE:
@@ -1031,20 +1169,21 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         removeLockscreen();
         stopMusicService();
         firstHMINone = true;
-//	  SdlExceptionCause cause = ((SdlException) e).getSdlExceptionCause();
-//	  if (cause != SdlExceptionCause.SDL_PROXY_CYCLED
-//		  && cause != SdlExceptionCause.BLUETOOTH_DISABLED) {
-//	      if (mSdlProxy != null) {
-//		  try {
-//		      mSdlProxy.resetProxy();
-//		  } catch (SdlException e1) {
-//		      // TODO Auto-generated catch block
-//		      e1.printStackTrace();
-//		  }
-//	      }
-//	  } else {
-//	      // stopSelf();
-//	  }
+	  SdlExceptionCause cause = ((SdlException) e).getSdlExceptionCause();
+        Log.i(TAG, "onProxyClosed  casue: " + cause.toString());
+	  if (cause != SdlExceptionCause.SDL_PROXY_CYCLED
+		  && cause != SdlExceptionCause.BLUETOOTH_DISABLED) {
+	      if (mSdlProxy != null) {
+		  try {
+		      mSdlProxy.resetProxy();
+		  } catch (SdlException e1) {
+		      // TODO Auto-generated catch block
+		      e1.printStackTrace();
+		  }
+	      }
+	  } else {
+	      // stopSelf();
+	  }
     }
 
     @Override
@@ -1072,6 +1211,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     @Override
     public void onAlertResponse(AlertResponse response) {
         // TODO Auto-generated method stub
+        Log.i(TAG, "onAlertResponse: " + response.getInfo() + " code:" + response.getResultCode());
     }
 
     @Override
@@ -1102,12 +1242,14 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     @Override
     public void onOnCommand(OnCommand notification) {
         // TODO Auto-generated method stub
-
+        Log.i(TAG, "onOnCommand: id：" + notification.getCmdID());
         // get the command id
         int id = notification.getCmdID();
         // get the trigger source, a command can be triggered by pressing menu
         // item in More or using voice command
         TriggerSource ts = notification.getTriggerSource();
+//        notification.serializeJSON();
+//        RPCRequest.deserializeJSONObject()
 
         switch (id) {
             case CMD_ID_MOSTPOPULAR:
@@ -1132,6 +1274,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 
                 break;
             case CMD_ID_LOCAL:
+                Log.i(TAG, "onOnCommand: Local called");
                 if (localsongs.size() > 1) {
                     startPlayList(localsongs);
                 } else {
@@ -1182,7 +1325,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
 
     @Override
     /*
-	 * (non-Javadoc)
+     * (non-Javadoc)
 	 *
 	 * @see com.smartdevicelink.proxy.interfaces.IProxyListenerBase#
 	 * onPerformInteractionResponse
@@ -1211,6 +1354,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                         return;
                     }
                     startPlayList(favoritesSonglist1);
+
                     break;
                 case 1032:
                     if (currentList.equals(newAgeSonglist2)) {
@@ -1221,10 +1365,10 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                     startPlayList(newAgeSonglist2);
                     break;
                 default:
-                    if(albumelist.hasID(choiceid)){
+                    if (albumelist.hasID(choiceid)) {
                         albumelist.onItemSelected(choiceid);
                     }
-                    if(novellist.hasID(choiceid)){
+                    if (novellist.hasID(choiceid)) {
                         novellist.onItemSelected(choiceid);
                     }
                     break;
@@ -1338,6 +1482,9 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                         e.printStackTrace();
                     }
                     break;
+                case 1:
+                    Log.d(TAG, "onOnButtonPress: button pressed in scrollablemessage");
+                    break;
             }
         } else if (name.equals(ButtonName.SEEKLEFT)) {
             playPrev();
@@ -1345,10 +1492,10 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         } else if (name.equals(ButtonName.SEEKRIGHT)) {
             playNext();
         } else if (name.equals(ButtonName.OK)) {
-            if (isPaused) {
-                startMediaPlayer();
-            } else {
+            if (MusicPlayerService.isPlaying()) {
                 pauseMediaPlayer();
+            } else {
+                startMediaPlayer();
             }
         } else if (name.equals(ButtonName.PRESET_1)) {
 //			getVehicleData();
@@ -1358,11 +1505,12 @@ public class AppLinkService extends Service implements IProxyListenerALM {
             list.add("博霞路104号");
             list.add("上海市浦东新区");
 
-//			list.add("上海市浦东新区");
+			list.add("上海市浦东新区");
+
             sendlocation.setLocationDescription("location");
             sendlocation.setLocationName("location name");
             sendlocation.setPhoneNumber("13918720164");
-//			sendlocation.setAddressLines(list);
+			sendlocation.setAddressLines(list);
             sendlocation.setLongitudeDegrees(121.5625);
             sendlocation.setLatitudeDegrees(31.2080);
             sendlocation.setCorrelationID(correlationID++);
@@ -1372,11 +1520,143 @@ public class AppLinkService extends Service implements IProxyListenerALM {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+
+//            show(String mainText1, String mainText2, String mainText3, String mainText4, Image graphic, Vector<SoftButton> softButtons, Vector<String> customPresets, TextAlignment alignment, Integer correlationID)
+//            Show show = new Show();
+//            show.setMainField1("MainField1");
+//            show.setMainField2("MainField2");
+//            show.setMainField3("MainField3");
+//            show.setMainField4("MainField4");
+//
+//            Image image = new Image();
+//            image.setImageType(ImageType.DYNAMIC);
+//            image.setValue("icon.png");
+//            show.setGraphic(image);
+//
+//            show.setMediaTrack("MediaTrack");
+//            show.setCustomPresets(Arrays.asList(new String[]{"CusPreset1", "CusPreset2", "CusPreset3"}));
+//            show.setAlignment(TextAlignment.CENTERED);
+//            SoftButton button1 = new SoftButton();
+//            button1.setText("Soft");// Text 和 Image的长度不能超过button的总长度否则不能显示Text
+//            Image imageS = new Image();
+//            imageS.setImageType(ImageType.STATIC);
+//            imageS.setValue("0x4c");
+//            button1.setImage(imageS);
+//            button1.setIsHighlighted(false);
+//            button1.setSoftButtonID(10111);
+//            button1.setSystemAction(SystemAction.DEFAULT_ACTION);
+//            button1.setType(SoftButtonType.SBT_BOTH); //可 设置为TEXT 或者 IMAGE，只显示文字或者图片
+//            Vector<SoftButton> softbuttons = new Vector<SoftButton>();
+//            softbuttons.add(button1);
+//            show.setSoftButtons(softbuttons);
+//            show.setCorrelationID(correlationID++);
+//
+//            try {
+//                mSdlProxy.sendRPCRequest(show);
+//            } catch (SdlException e) {
+//                e.printStackTrace();
+//            }
+
+
         } else if (name.equals(ButtonName.PRESET_2)) {
-
             Log.i(TAG, "send pi to SYNC, correlationID : " + correlationID);
+            boolean callSupported = false;
+            try {
 
-            albumelist.showList(mSdlProxy,"请选择专辑","请选择专辑",correlationID++);
+                HMICapabilities hca = mSdlProxy.getHmiCapabilities();
+                if (hca != null) {
+                    callSupported = hca.isPhoneCallAvailable();
+                }
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
+            DialNumber number = new DialNumber();
+            number.setNumber("10086");
+            number.setCorrelationID(correlationID++);
+            try {
+                mSdlProxy.sendRPCRequest(number);
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
+        } else if (name.equals(ButtonName.PRESET_3)) {
+            AddCommand addcommand = new AddCommand();
+            addcommand.setCmdID(1021);
+            Image image = new Image();
+            image.setImageType(ImageType.STATIC);// STATIC:  SYNC内置图片; DYNAMIC: 使用PutFile上传的图片
+            image.setValue("0x09");//在附表中的 SYNC支持图片可以查到，
+            addcommand.setCmdIcon(image);
+            MenuParams params = new MenuParams(); // 菜单参数设置Command所在的Submenu 和位置
+            params.setMenuName("AddCommand1");
+            params.setParentID(0); //Submenu ID, 如果是0， 就是在根目录下
+            params.setPosition(0); //Command的位置
+            addcommand.setMenuParams(params);
+            addcommand.setVrCommands(Arrays.asList(new String[]{
+                    "VR Command1", "VR Command2", "VR Command3"}));//设置指令语音识别
+            addcommand.setCorrelationID(correlationID++);
+            try {
+
+                mSdlProxy.sendRPCRequest(addcommand);
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
+        } else if (name.equals(ButtonName.PRESET_4)) {
+            PerformAudioPassThru papt = new PerformAudioPassThru();
+            papt.setCorrelationID(correlationID++);
+            papt.setAudioPassThruDisplayText1("Listening");
+            papt.setAudioPassThruDisplayText2("Still listening");
+            papt.setAudioType(AudioType.PCM);
+            papt.setBitsPerSample(BitsPerSample._16_BIT);
+            papt.setSamplingRate(SamplingRate._16KHZ);
+            papt.setInitialPrompt(TTSChunkFactory.createSimpleTTSChunks("hello, there"));
+            papt.setMaxDuration(30000);
+            papt.setMuteAudio(true);
+            try {
+                mSdlProxy.sendRPCRequest(papt);
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
+        } else if (name.equals(ButtonName.PRESET_5)) {
+            Vector<SoftButton> btns = new Vector<SoftButton>();
+            SoftButton btn1 = new SoftButton();
+            btn1.setSoftButtonID(1);
+            btn1.setText("Button1");
+            btn1.setType(SoftButtonType.SBT_TEXT);
+            btn1.setSystemAction(SystemAction.DEFAULT_ACTION);
+            btn1.setIsHighlighted(true);
+            btns.add(btn1);
+
+            SoftButton btn2 = new SoftButton();
+            btn2.setSoftButtonID(2);
+            btn2.setText("Button2");
+            btn2.setType(SoftButtonType.SBT_TEXT);
+            btn2.setSystemAction(SystemAction.DEFAULT_ACTION);
+            btn2.setIsHighlighted(true);
+            btns.add(btn2);
+
+            ScrollableMessage sm = new ScrollableMessage();
+            sm.setCorrelationID(correlationID++);
+            sm.setScrollableMessageBody("Message Body");
+            sm.setTimeout(30000);
+            sm.setSoftButtons(btns);
+            try {
+                mSdlProxy.sendRPCRequest(sm);
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
+
+        } else if(name.equals(ButtonName.PRESET_6)){
+            try {
+                PerformInteraction pi = new PerformInteraction();
+                pi.setCorrelationID(correlationID++);
+                pi.setInitialText("待处理订单");
+                pi.setInitialPrompt(TTSChunkFactory.createSimpleTTSChunks("待处理订单"));
+                pi.setInteractionMode(InteractionMode.MANUAL_ONLY);
+                pi.setInteractionLayout(LayoutMode.LIST_ONLY);
+                pi.setInteractionChoiceSetIDList(Arrays.asList(new Integer[]{Integer.valueOf(20112)}));
+                mSdlProxy.sendRPCRequest(pi);
+            } catch (SdlException e) {
+                e.printStackTrace();
+            }
         }
         if (currentList != null)
             currentList.setRandom(isRandom);
@@ -1432,7 +1712,6 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     public void onSubscribeVehicleDataResponse(
             SubscribeVehicleDataResponse response) {
         // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -1472,6 +1751,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
         }
 
         double speed = response.getSpeed().doubleValue();
+        GPSData gpsData = response.getGps();
         int odometer = response.getOdometer() != null ? response.getOdometer()
                 .intValue() : 0;
         Log.i(TAG, "speed is " + speed);
@@ -1493,7 +1773,9 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     @Override
     public void onOnVehicleData(OnVehicleData notification) {
         // TODO Auto-generated method stub
-
+        Log.i(TAG, "onOnVehicleData: speed:" + notification.getSpeed());
+        Log.i(TAG, "onOnVehicleData: gps:" + notification.getGps());
+//        notification.get
     }
 
     @Override
@@ -1513,6 +1795,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     @Override
     public void onOnAudioPassThru(OnAudioPassThru notification) {
         // TODO Auto-generated method stub
+        notification.getAPTData();
 
     }
 
@@ -1654,7 +1937,7 @@ public class AppLinkService extends Service implements IProxyListenerALM {
     @Override
     public void onDialNumberResponse(DialNumberResponse arg0) {
         // TODO Auto-generated method stub
-
+        Log.i(TAG, "onDialNumberResponse: " + arg0.getInfo() + "  " + arg0.getSuccess());
     }
 
     @Override
